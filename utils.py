@@ -1,45 +1,90 @@
 import json
 import requests
 
+from speechkit import Session, SpeechSynthesis, ShortAudioRecognition
 import logging
+
 import config
 import text
 
 # Замените на ваши реальные значения
-api_key = "AQVN31V_Z6wpxVSRe16YXfPitbS-XWB3VZv2pp8I"
-folder_id = "b1g8hv628o86piqpqm02"
+class GPTAssistant:
+    def __init__(self, api_key, folder_id):
+        self.api_key = api_key
+        self.folder_id = folder_id
+        self.url = "https://llm.api.cloud.yandex.net/llm/v1alpha/instruct"
+        self.headers = {
+            "Authorization": f"Api-Key {self.api_key}",
+            "x-folder-id": self.folder_id,
+            "Content-Type": "application/json"
+        }
 
-url = f"https://llm.api.cloud.yandex.net/llm/v1alpha/instruct"
-headers = {
-"Authorization": f"Api-Key {api_key}",
-"x-folder-id": folder_id,
-"Content-Type": "application/json"
-}
-
-async def generate_response(user_question):
-
-        instruction_text = text.instruction
-        request_text = user_question
-        temperature = 0.3
+    def generate_response(self, user_question, instruction_text, temperature=0.3):
         prompt_data = {
-          "model": "general",
-          "generationOptions": {
+            "model": "general",
+            "generationOptions": {
                 "partialResults": False,
                 "temperature": temperature,
-                "maxTokens": "7400"
-          },
-          "instructionText": instruction_text,
-          "requestText": request_text
+                "maxTokens": "500"
+            },
+            "instructionText": instruction_text,
+            "requestText": user_question
         }
-        response = requests.post(url, headers=headers, json=prompt_data)
+        response = requests.post(self.url, headers=self.headers, json=prompt_data)
 
         if response.status_code == 200:
+            print(response.json())
             result = response.json()["result"]["alternatives"][0]["text"]
             num_tokens = response.json()["result"]["alternatives"][0]["num_tokens"]
             return result, num_tokens
         else:
             print(f"Request failed with status code: {response.status_code}")
             print(response.text)
+            return None, None
+
+assistant = GPTAssistant(config.GPT_API_KEY, config.FOLDER_ID)
+
+async def generate_response(user_question, instruction_text =
+text.instruction,
+                      temperature=0.3):
+    return assistant.generate_response(user_question, instruction_text,
+                                   temperature)
+
+
+class CSpeechKit:
+
+    __APIKey = "AQVN1a6-ru21pyEZiU67SKUNbaxvuhaudG5IdOCT"
+    __api_key_session = Session
+
+    def __init__(self):
+        self.__api_key_session = Session.from_api_key(self.__APIKey, x_client_request_id_header=True, x_data_logging_enabled=True)
+
+    def synthesize_audio(self, path, message_text, person_voice='oksana', file_format='oggopus', rate='16000'):
+        synthesize_audio = SpeechSynthesis(self.__api_key_session)
+        synthesize_audio.synthesize(path,
+                                    text=message_text,
+                                    voice=person_voice,
+                                    format=file_format,
+                                    sampleRateHertz=rate)
+
+
+    def recognize_audio(self, file_path, file_format='oggopus', rate='16000'):
+        recognize_short_audio = ShortAudioRecognition(self.__api_key_session)
+        with open(file_path, "rb") as f:
+            data = f.read()
+        text = recognize_short_audio.recognize(data, format=file_format, sampleRateHertz=rate)
+        return text
+
+speech = CSpeechKit()
+
+async def stt(audio_path):
+    return speech.recognize_audio(audio_path)
+
+async def tts(text):
+    audio_path = "audio.ogg"
+    speech.synthesize_audio(audio_path, text)
+    return audio_path
+
 
 if __name__ == "__main__":
     print(generate_response("Мне до сих пор не доаставили заказ!"))
