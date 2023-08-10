@@ -1,37 +1,27 @@
-from aiogram import Bot, Dispatcher, executor, types
+import asyncio
+import logging
 
-API_TOKEN = '6686387629:AAFRu5N7Di4CHpptxdG_rFaQbsvvT_tSnQQ'
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
-welcome_mes = """
-Здравствуйте!
+from aiogram import Bot, Dispatcher
+from aiogram.enums.parse_mode import ParseMode
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.utils.chat_action import ChatActionMiddleware
 
-Это чат поддержки Яндекс.Лавки.
+import config
+from handlers import router
 
-Мы на связи с 09:00 до 21:00 по московскому времени в будние дни, а еще нам можно написать в форму обратной связи, если вам так удобнее :)
 
-Я — добрый робот поддержки. Постараюсь вам помочь, а если не получится — позову своих коллег-операторов.
 
-Какой у вас вопрос?
 
-— Если у вас вопрос про время доставки (например, курьер с вашим заказом 
-опаздывает) — выберите кнопку "Время доставки"
-— Если ваш заказ не привезли совсем (Курьер опаздывает больше чем на 40 
-минут) — выберите кнопку "Не привезли заказ"
-— Если ваш товар повреждён — выберите кнопку "Товар повреждён"
-— Если вам привезли испорченный продукт — выберите кнопку "Испорченный продукт"
-— Если у вас вопрос по любому другому нашему сервису, выберите кнопку "Другой вопрос" 
-"""
+async def main():
 
-@dp.message_handler(commands=['start']) #Явно указываем в декораторе, на какую команду реагируем.
-async def send_welcome(message: types.Message):
-   await message.reply(welcome_mes) #Так как код работает асинхронно,
-   # то обязательно
-   # пишем await.
+   bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
+   dp = Dispatcher(storage=MemoryStorage())
+   dp.include_router(router)
+   dp.message.middleware(ChatActionMiddleware())
+   await bot.delete_webhook(drop_pending_updates=True)
+   await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
-@dp.message_handler() #Создаём новое событие, которое запускается в ответ на любой текст, введённый пользователем.
-async def echo(message: types.Message): #Создаём функцию с простой задачей — отправить обратно тот же текст, что ввёл пользователь.
-   await message.answer(message.text)
 
-if __name__ == '__main__':
-   executor.start_polling(dp, skip_updates=True)
+if __name__ == "__main__":
+   logging.basicConfig(level=logging.INFO)
+   asyncio.run(main())
