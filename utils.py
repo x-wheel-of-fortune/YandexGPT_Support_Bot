@@ -26,7 +26,7 @@ async def generate_response(user_question):
           "generationOptions": {
                 "partialResults": False,
                 "temperature": temperature,
-                "maxTokens": "5000"
+                "maxTokens": "7400"
           },
           "instructionText": instruction_text,
           "requestText": request_text
