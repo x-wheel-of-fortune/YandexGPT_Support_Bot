@@ -54,7 +54,7 @@ async def generate_text(msg: Message, state: FSMContext):
         prompt = msg.text
     mesg = await msg.answer(text.gen_wait)
     res = await utils.generate_response(prompt)
-    if not res:
+    if not res or not res[0]:
         return await mesg.edit_text(text.gen_error, reply_markup=kb.iexit_kb)
     await mesg.edit_text(res[0] + text.text_watermark, disable_web_page_preview=True)
 
