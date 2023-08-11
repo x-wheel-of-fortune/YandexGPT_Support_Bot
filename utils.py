@@ -44,6 +44,14 @@ class GPTAssistant:
 
 assistant = GPTAssistant(config.GPT_API_KEY, config.FOLDER_ID)
 
+async def classify(user_question, instruction_text =
+text.classification_prompt, temperature=0.01):
+    s = ""
+    while not s.isdigit() or int(s) > 4 or int(s) < 0:
+        s = assistant.generate_response(user_question, instruction_text,
+                                        temperature)[0]
+    return int(s)
+
 async def generate_response(user_question, instruction_text =
 text.instruction,
                       temperature=0.3):
@@ -87,4 +95,5 @@ async def tts(text):
 
 
 if __name__ == "__main__":
-    print(generate_response("Мне до сих пор не доаставили заказ!"))
+    ans = classify("Мне до сих пор не доаставили заказ!")
+    print(ans)
