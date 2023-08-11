@@ -19,12 +19,14 @@ bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
 router = Router()
 
 @router.message(Command("start"))
-async def start_handler(msg: Message):
-    await msg.answer(text.greet.format(name=msg.from_user.full_name), reply_markup=kb.menu)
+async def start_handler(msg: Message, state: FSMContext):
+    await msg.answer(text.greet.format(name=msg.from_user.full_name))
+    await state.set_state(Gen.text_response)#, reply_markup=kb.menu)
 
-#@router.message()
-async def menu(msg: Message):
-    await msg.answer(text.menu, reply_markup=kb.menu)
+# #@router.message()
+# async def menu(msg: Message):
+#     problem_type = utils.classify(msg.text)
+#     #await msg.answer(text.menu, reply_markup=kb.menu)
 
 @router.callback_query(F.data == "text_response")
 async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
@@ -40,7 +42,7 @@ async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
 
 @router.message(Gen.text_response)
 @flags.chat_action("typing")
-async def generate_text(msg: Message, state: FSMContext):
+async def text_response(msg: Message, state: FSMContext):
     if msg.content_type == types.ContentType.VOICE:
         file_id = msg.voice.file_id
         file = await bot.get_file(file_id)
@@ -53,7 +55,7 @@ async def generate_text(msg: Message, state: FSMContext):
     else:
         prompt = msg.text
     mesg = await msg.answer(text.gen_wait)
-    res = await utils.generate_response(prompt)
+    res = await utils.generate_classified_response(prompt)
     if not res or not res[0]:
         return await mesg.edit_text(text.gen_error, reply_markup=kb.iexit_kb)
     await mesg.edit_text(res[0] + text.text_watermark, disable_web_page_preview=True)
@@ -61,7 +63,7 @@ async def generate_text(msg: Message, state: FSMContext):
 
 @router.message(Gen.audio_response)
 @flags.chat_action("typing")
-async def generate_text(msg: Message, state: FSMContext):
+async def audio_response(msg: Message, state: FSMContext):
     if msg.content_type == types.ContentType.VOICE:
         file_id = msg.voice.file_id
         file = await bot.get_file(file_id)
@@ -74,7 +76,7 @@ async def generate_text(msg: Message, state: FSMContext):
     else:
         prompt = msg.text
     mesg = await msg.answer(text.gen_wait)
-    res = await utils.generate_response(prompt)
+    res = await utils.generate_classified_response(prompt)
     if not res:
         return await mesg.edit_text(text.gen_error, reply_markup=kb.iexit_kb)
     out_filename = await utils.tts(res[0])

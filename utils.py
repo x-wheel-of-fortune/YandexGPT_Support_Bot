@@ -7,7 +7,7 @@ import logging
 import config
 import text
 
-# Замените на ваши реальные значения
+
 class GPTAssistant:
     def __init__(self, api_key, folder_id):
         self.api_key = api_key
@@ -53,10 +53,15 @@ text.classification_prompt, temperature=0.01):
     return int(s)
 
 async def generate_response(user_question, instruction_text =
-text.instruction,
+text.base_instruction,
                       temperature=0.3):
     return assistant.generate_response(user_question, instruction_text,
                                    temperature)
+
+async def generate_classified_response(user_question):
+    problem_type = await classify(user_question)
+    instruction = text.base_instruction + text.problem_instructions[problem_type]
+    return await generate_response(user_question, instruction)
 
 
 class CSpeechKit:
@@ -93,7 +98,9 @@ async def tts(text):
     speech.synthesize_audio(audio_path, text)
     return audio_path
 
-
-if __name__ == "__main__":
-    ans = classify("Мне до сих пор не доаставили заказ!")
-    print(ans)
+# import asyncio
+# if __name__ == "__main__":
+#     async def getans():
+#         ans = await generate_classified_response("Мне до сих пор не доаставили заказ!")
+#         print(ans)
+#     asyncio.run(getans())
