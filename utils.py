@@ -33,7 +33,6 @@ class GPTAssistant:
         response = requests.post(self.url, headers=self.headers, json=prompt_data)
 
         if response.status_code == 200:
-            print(response.json())
             result = response.json()["result"]["alternatives"][0]["text"]
             num_tokens = response.json()["result"]["alternatives"][0]["num_tokens"]
             return result, num_tokens
