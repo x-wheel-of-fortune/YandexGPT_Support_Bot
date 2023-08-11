@@ -20,8 +20,8 @@ router = Router()
 
 @router.message(Command("start"))
 async def start_handler(msg: Message, state: FSMContext):
-    await msg.answer(text.greet.format(name=msg.from_user.full_name))
-    await state.set_state(Gen.text_response)#, reply_markup=kb.menu)
+    await msg.answer(text.greet.format(name=msg.from_user.full_name), reply_markup=kb.menu)
+    #await state.set_state(Gen.text_response)
 
 # #@router.message()
 # async def menu(msg: Message):
@@ -31,14 +31,14 @@ async def start_handler(msg: Message, state: FSMContext):
 @router.callback_query(F.data == "text_response")
 async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
     await state.set_state(Gen.text_response)
-    await clbck.message.edit_text(text.gen_text)
-    await clbck.message.answer(text.gen_exit, reply_markup=kb.exit_kb)
+    await clbck.message.answer(text.gen_text)
+
 
 @router.callback_query(F.data == "audio_response")
 async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
     await state.set_state(Gen.audio_response)
-    await clbck.message.edit_text(text.gen_text)
-    await clbck.message.answer(text.gen_exit, reply_markup=kb.exit_kb)
+    await clbck.message.answer(text.gen_text)
+
 
 @router.message(Gen.text_response)
 @flags.chat_action("typing")
