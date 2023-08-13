@@ -1,6 +1,6 @@
 import json
 import requests
-
+import time
 from speechkit import Session, SpeechSynthesis, ShortAudioRecognition
 import logging
 
@@ -35,6 +35,7 @@ class GPTAssistant:
             "instructionText": instruction_text,
             "requestText": user_question
         }
+        print(f"Sending request to YandexGPT: {prompt_data}")
         response = requests.post(self.url, headers=self.headers, json=prompt_data)
 
         if response.status_code == 200:
@@ -72,6 +73,7 @@ async def generate_response(
         instruction_text=text.base_instruction,
         temperature=0.3,
 ):
+    time.sleep(1) # to avoid 429
     return assistant.generate_response(
         user_question, instruction_text, temperature)
 
