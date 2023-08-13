@@ -1,13 +1,14 @@
 import os
 import datetime
 from aiogram import F, Router, types
-from aiogram.filters import Command
+from aiogram.filters import Command, Text
 from aiogram.types import Message, FSInputFile
 from aiogram import Bot, Dispatcher
 from aiogram.enums.parse_mode import ParseMode
 from aiogram import flags
 from aiogram.fsm.context import FSMContext
 from aiogram.types.callback_query import CallbackQuery
+from aiogram.filters import StateFilter
 import utils
 from states import Gen
 from pathlib import Path
@@ -21,7 +22,9 @@ SESSION_TIMEOUT = datetime.timedelta(minutes=30)
 
 user_last_interaction = {}
 
+
 @router.message(Command("start"))
+@router.message(StateFilter(None))
 async def start_handler(msg: Message, state: FSMContext):
     await msg.answer(text.greet.format(name=msg.from_user.full_name), reply_markup=kb.menu)
     user_id = msg.from_user.id
@@ -37,20 +40,26 @@ async def start_handler(msg: Message, state: FSMContext):
 @router.callback_query(F.data == "text_response")
 async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
     await state.set_state(Gen.text_response)
-    await clbck.message.answer(text.gen_text)
+    await clbck.message.answer(text.gen_text,reply_markup=kb.exit_kb)
 
 
 @router.callback_query(F.data == "audio_response")
 async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
     await state.set_state(Gen.audio_response)
-    await clbck.message.answer(text.gen_text)
+    await clbck.message.answer(text.gen_text,reply_markup=kb.exit_kb)
+
+@router.message(Text("✅️ Вопрос решён"))
+async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
+    await state.set_state(None)
+    await clbck.answer(text.end_session_text)
+
 
 
 @router.message(Gen.text_response)
 @flags.chat_action("typing")
 async def text_response(msg: Message, state: FSMContext):
     user_id = msg.from_user.id
-    if user_id in user_last_interaction and (datetime.datetime.now() - user_last_interaction[user_id]) >= SESSION_TIMEOUT:
+    if user_id not in user_last_interaction or (datetime.datetime.now() - user_last_interaction[user_id]) >= SESSION_TIMEOUT:
         print("previous session ran out")
         await start_handler(msg, state)
     else:
@@ -68,7 +77,7 @@ async def text_response(msg: Message, state: FSMContext):
         mesg = await msg.answer(text.gen_wait)
         res = await utils.generate_classified_response(prompt)
         if not res or not res[0]:
-            return await mesg.edit_text(text.gen_error, reply_markup=kb.iexit_kb)
+            return await mesg.edit_text(text.gen_error)
         await mesg.edit_text(res[0] + text.text_watermark, disable_web_page_preview=True)
 
         user_last_interaction[user_id] = datetime.datetime.now()
@@ -77,9 +86,8 @@ async def text_response(msg: Message, state: FSMContext):
 @flags.chat_action("typing")
 async def audio_response(msg: Message, state: FSMContext):
     user_id = msg.from_user.id
-    if user_id in user_last_interaction and (
-            datetime.datetime.now() - user_last_interaction[
-        user_id]) >= SESSION_TIMEOUT:
+    if user_id not in user_last_interaction or (datetime.datetime.now() - user_last_interaction[user_id]) >= SESSION_TIMEOUT:
+
         print("previous session ran out")
 
         await start_handler(msg, state)
@@ -98,7 +106,7 @@ async def audio_response(msg: Message, state: FSMContext):
         mesg = await msg.answer(text.gen_wait)
         res = await utils.generate_classified_response(prompt)
         if not res:
-            return await mesg.edit_text(text.gen_error, reply_markup=kb.iexit_kb)
+            return await mesg.edit_text(text.gen_error)
         out_filename = await utils.tts(res[0])
         # Отправка голосового сообщения
         path = Path("", out_filename)

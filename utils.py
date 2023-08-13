@@ -79,7 +79,10 @@ async def generate_response(
 async def generate_classified_response(user_question):
     problem_type = await classify(user_question)
     instruction = text.base_instruction + text.problem_instructions[problem_type]
-    return await generate_response(user_question, instruction)
+    res = None
+    while not res or not res[0]:
+        res = await generate_response(user_question, instruction)
+    return res
 
 
 class CSpeechKit:
