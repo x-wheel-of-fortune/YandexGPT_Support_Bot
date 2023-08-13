@@ -9,13 +9,13 @@ import text
 
 
 class GPTAssistant:
-    def __init__(self, api_key, folder_id):
-        self.api_key = api_key
-        self.folder_id = folder_id
-        self.url = "https://llm.api.cloud.yandex.net/llm/v1alpha/instruct"
-        self.headers = {
-            "Authorization": f"Api-Key {self.api_key}",
-            "x-folder-id": self.folder_id,
+    def __init__(self, api_key: str, folder_id: str):
+        self._api_key = api_key
+        self._folder_id = folder_id
+        self._url = "https://llm.api.cloud.yandex.net/llm/v1alpha/instruct"
+        self._headers = {
+            "Authorization": f"Api-Key {self._api_key}",
+            "x-folder-id": self._folder_id,
             "Content-Type": "application/json"
         }
 
@@ -35,7 +35,7 @@ class GPTAssistant:
             "instructionText": instruction_text,
             "requestText": user_question
         }
-        response = requests.post(self.url, headers=self.headers, json=prompt_data)
+        response = requests.post(self._url, headers=self._headers, json=prompt_data)
 
         if response.status_code == 200:
             result = response.json()["result"]["alternatives"][0]["text"]

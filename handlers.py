@@ -8,12 +8,15 @@ from aiogram.enums.parse_mode import ParseMode
 from aiogram import flags
 from aiogram.fsm.context import FSMContext
 from aiogram.types.callback_query import CallbackQuery
-import utils
-from states import Gen
 from pathlib import Path
+
+import utils
 import kb
 import text
 import config
+
+from states import Gen
+
 
 bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
 router = Router()
@@ -21,13 +24,13 @@ router = Router()
 
 @router.message(Command("start"))
 async def start_handler(msg: Message, state: FSMContext):
-    await msg.answer(text.greet.format(name=msg.from_user.full_name), reply_markup=kb.menu)
+    await msg.answer(text.greet.format(name=msg.from_user.full_name), reply_markup=kb.menu_kb)
     # await state.set_state(Gen.text_response)
 
 # #@router.message()
 # async def menu(msg: Message):
 #     problem_type = utils.classify(msg.text)
-#     #await msg.answer(text.menu, reply_markup=kb.menu)
+#     #await msg.answer(text.menu, reply_markup=kb.menu_kb)
 
 
 @router.callback_query(F.data == "text_response")
