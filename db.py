@@ -18,8 +18,11 @@ def get_by_id(user_id: int):
 
     column_names = [description[0] for description in cursor.description]
 
-    # Создание словаря с данными
-    user_data_dict = dict(zip(column_names, user_data))
+    if user_data:
+        # Создание словаря с данными
+        user_data_dict = dict(zip(column_names, user_data))
+    else:
+        user_data_dict = "У этого пользователя нет активных заказов."
 
     return user_data_dict
 

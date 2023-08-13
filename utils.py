@@ -3,7 +3,7 @@ import requests
 import time
 from speechkit import Session, SpeechSynthesis, ShortAudioRecognition
 import logging
-
+from db import get_by_id
 import config
 import text
 
@@ -78,9 +78,9 @@ async def generate_response(
         user_question, instruction_text, temperature)
 
 
-async def generate_classified_response(user_question):
+async def generate_classified_response(user_question,user_id):
     problem_type = await classify(user_question)
-    instruction = text.base_instruction + text.problem_instructions[problem_type]
+    instruction = text.base_instruction + text.problem_instructions[problem_type] + text.database_instruction + str(get_by_id(user_id))
     res = None
     while not res or not res[0]:
         res = await generate_response(user_question, instruction)
