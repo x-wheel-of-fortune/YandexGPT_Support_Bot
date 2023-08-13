@@ -19,7 +19,12 @@ class GPTAssistant:
             "Content-Type": "application/json"
         }
 
-    def generate_response(self, user_question, instruction_text, temperature=0.3):
+    def generate_response(
+            self,
+            user_question: str,
+            instruction_text: str,
+            temperature: float = 0.3,
+    ):
         prompt_data = {
             "model": "general",
             "generationOptions": {
@@ -41,21 +46,35 @@ class GPTAssistant:
             print(response.text)
             return None, None
 
+
 assistant = GPTAssistant(config.GPT_API_KEY, config.FOLDER_ID)
 
-async def classify(user_question, instruction_text =
-text.classification_prompt, temperature=0.01):
-    s = assistant.generate_response(user_question, instruction_text,
-                                        temperature)[0]
+
+async def classify(
+        user_question,
+        instruction_text=text.classification_prompt,
+        temperature=0.01,
+):
+    s = assistant.generate_response(
+        user_question,
+        instruction_text,
+        temperature,
+    )[0]
+
     if not s or not s.isdigit() or int(s) > 4 or int(s) < 0:
         s = 0
+
     return int(s)
 
-async def generate_response(user_question, instruction_text =
-text.base_instruction,
-                      temperature=0.3):
-    return assistant.generate_response(user_question, instruction_text,
-                                   temperature)
+
+async def generate_response(
+        user_question,
+        instruction_text=text.base_instruction,
+        temperature=0.3,
+):
+    return assistant.generate_response(
+        user_question, instruction_text, temperature)
+
 
 async def generate_classified_response(user_question):
     problem_type = await classify(user_question)
@@ -69,7 +88,11 @@ class CSpeechKit:
     __api_key_session = Session
 
     def __init__(self):
-        self.__api_key_session = Session.from_api_key(self.__APIKey, x_client_request_id_header=True, x_data_logging_enabled=True)
+        self.__api_key_session = Session.from_api_key(
+            self.__APIKey,
+            x_client_request_id_header=True,
+            x_data_logging_enabled=True,
+        )
 
     def synthesize_audio(self, path, message_text, person_voice='oksana', file_format='oggopus', rate='16000'):
         synthesize_audio = SpeechSynthesis(self.__api_key_session)
@@ -79,7 +102,6 @@ class CSpeechKit:
                                     format=file_format,
                                     sampleRateHertz=rate)
 
-
     def recognize_audio(self, file_path, file_format='oggopus', rate='16000'):
         recognize_short_audio = ShortAudioRecognition(self.__api_key_session)
         with open(file_path, "rb") as f:
@@ -87,10 +109,13 @@ class CSpeechKit:
         text = recognize_short_audio.recognize(data, format=file_format, sampleRateHertz=rate)
         return text
 
+
 speech = CSpeechKit()
+
 
 async def stt(audio_path):
     return speech.recognize_audio(audio_path)
+
 
 async def tts(text):
     audio_path = "audio.ogg"

@@ -7,21 +7,17 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.utils.chat_action import ChatActionMiddleware
 
 import config
-from handlers import router,bot
-
-
+from handlers import router, bot
 
 
 async def main():
+    dp = Dispatcher(storage=MemoryStorage())
+    dp.include_router(router)
+    dp.message.middleware(ChatActionMiddleware())
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
-   dp = Dispatcher(storage=MemoryStorage())
-   dp.include_router(router)
-   dp.message.middleware(ChatActionMiddleware())
-   await bot.delete_webhook(drop_pending_updates=True)
-   await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
-
-
-if __name__ == "__main__":
-   logging.basicConfig(level=logging.INFO)
-   asyncio.run(main())
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(main())

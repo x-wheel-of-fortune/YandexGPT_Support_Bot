@@ -18,15 +18,17 @@ import config
 bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
 router = Router()
 
+
 @router.message(Command("start"))
 async def start_handler(msg: Message, state: FSMContext):
     await msg.answer(text.greet.format(name=msg.from_user.full_name), reply_markup=kb.menu)
-    #await state.set_state(Gen.text_response)
+    # await state.set_state(Gen.text_response)
 
 # #@router.message()
 # async def menu(msg: Message):
 #     problem_type = utils.classify(msg.text)
 #     #await msg.answer(text.menu, reply_markup=kb.menu)
+
 
 @router.callback_query(F.data == "text_response")
 async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):

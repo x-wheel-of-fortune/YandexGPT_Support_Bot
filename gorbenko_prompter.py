@@ -31,26 +31,33 @@ problem_instructions = {
 
 user_text = "MarkGor?"
 
-temperature = 0.3
-
 ###########################################################################################
 
 assistant = utils.assistant
 
-async def classify_gorbenko(user_question, instruction_text =
-classification_prompt, temperature=0.01):
-    s = assistant.generate_response(user_question, instruction_text,
-                                        temperature)[0]
+
+async def classify_gorbenko(
+        user_question: str,
+        instruction_text: str = classification_prompt,
+        temperature: float = 0.01,
+):
+    s = assistant.generate_response(
+        user_question, instruction_text, temperature)[0]
     if not s or not s.isdigit() or int(s) > 4 or int(s) < 0:
         s = 0
     return int(s)
 
-async def generate_classified_response_gorbenko(user_question):
+
+async def generate_classified_response_gorbenko(
+        user_question: str,
+        temperature: float = 0.3,
+):
     problem_type = await classify_gorbenko(user_question)
     instruction = base_instruction + problem_instructions[problem_type]
     return await utils.generate_response(user_question, instruction, temperature)
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     async def getans():
         ans = await generate_classified_response_gorbenko(user_text)
         print(f"\nYandexGPT:\n\n{ans[0]}")
