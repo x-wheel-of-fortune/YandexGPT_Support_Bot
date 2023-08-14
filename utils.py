@@ -103,7 +103,7 @@ async def classify(
 async def generate_response(
         user_question,
         instruction_text=text.base_instruction,
-        temperature=0.3,
+        temperature=0.1,
 ):
 
     return assistant.generate_response(
@@ -120,7 +120,7 @@ async def generate_classified_response(user_question,user_id):
         res = await generate_response(user_question, instruction)
         if not res or not res[0]:
             time.sleep(1)
-    return res
+    return res, problem_type
 
 
 class CSpeechKit:
