@@ -1,9 +1,7 @@
 import sqlite3
 
 
-def get_user_data_by_id(
-        user_id: int,
-):
+def get_by_id(user_id: int):
     # Подключение к базе данных
     conn = sqlite3.connect('users_yandex.db')
     cursor = conn.cursor()
@@ -18,13 +16,21 @@ def get_user_data_by_id(
     # Закрытие соединения
     conn.close()
 
-    return user_data
+    column_names = [description[0] for description in cursor.description]
+
+    if user_data:
+        # Создание словаря с данными
+        user_data_dict = dict(zip(column_names, user_data))
+    else:
+        user_data_dict = "У этого пользователя нет активных заказов."
+
+    return user_data_dict
 
 
 def main():
     # Пример использования
     user_id = 7  # Замените на нужный вам ID пользователя
-    user_data = get_user_data_by_id(user_id)
+    user_data = get_by_id(user_id)
     if user_data:
         print(user_data)
     else:
