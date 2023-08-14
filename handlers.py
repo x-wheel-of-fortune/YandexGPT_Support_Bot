@@ -1,22 +1,26 @@
 import os
+import yaml
+import utils
 import datetime
-from aiogram import F, Router, types
-from aiogram.filters import Command, Text
+from aiogram import F, Router, types, Bot, Dispatcher, flags
+from aiogram.filters import Command, Text, StateFilter
 from aiogram.types import Message, FSInputFile
-from aiogram import Bot, Dispatcher
 from aiogram.enums.parse_mode import ParseMode
-from aiogram import flags
 from aiogram.fsm.context import FSMContext
 from aiogram.types.callback_query import CallbackQuery
-from aiogram.filters import StateFilter
-import utils
 from states import Gen
 from pathlib import Path
-import kb
-import text
-import config
+import keyboard
 
-bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
+
+with open('instructions.yaml', encoding="utf8") as file:
+    instructions = yaml.safe_load(file)
+with open('config.yaml', encoding="utf8") as file:
+    cfg = yaml.safe_load(file)
+with open('const_answers.yaml', encoding="utf8") as file:
+    const_answers = yaml.safe_load(file)
+
+bot = Bot(token=cfg["BOT_TOKEN"], parse_mode=ParseMode.HTML)
 router = Router()
 SESSION_TIMEOUT = datetime.timedelta(minutes=30)
 
@@ -26,35 +30,28 @@ user_last_interaction = {}
 @router.message(Command("start"))
 @router.message(StateFilter(None))
 async def start_handler(msg: Message, state: FSMContext):
-    await msg.answer(text.greet.format(name=msg.from_user.full_name))
+    await msg.answer(const_answers["greet"].format(name=msg.from_user.full_name))
     user_id = 7 #msg.from_user.id
     await state.set_state(Gen.waiting_for_question)
     user_last_interaction[user_id] = datetime.datetime.now()
-
-    # await state.set_state(Gen.text_response)
-
-# #@router.message()
-# async def menu(msg: Message):
-#     problem_type = utils.classify(msg.text)
-#     #await msg.answer(text.menu, reply_markup=kb.menu)
 
 
 @router.callback_query(F.data == "text_response")
 async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
     await state.set_state(Gen.text_response)
-    await clbck.message.answer(text.gen_text,reply_markup=kb.exit_kb)
+    await clbck.message.answer(const_answers["gen_text"], reply_markup=keyboard.exit_kb)
 
 
 @router.callback_query(F.data == "audio_response")
 async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
     await state.set_state(Gen.audio_response)
-    await clbck.message.answer(text.gen_text,reply_markup=kb.exit_kb)
+    await clbck.message.answer(const_answers["gen_text"], reply_markup=keyboard.exit_kb)
 
-@router.message(Text("✅️ Вопрос решён"))
+
+@router.message(Text(const_answers["case_completed"]))
 async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
     await state.set_state(None)
-    await clbck.answer(text.end_session_text)
-
+    await clbck.answer(const_answers["end_session_text"])
 
 
 @router.message(Gen.waiting_for_question)
@@ -76,12 +73,13 @@ async def response(msg: Message, state: FSMContext):
             os.remove(file_on_disk)  # Удаление временного файла
         else:
             prompt = msg.text
-        mesg = await msg.answer(text.gen_wait)
+        mesg = await msg.answer(const_answers["gen_wait"])
+        print(await order_wrong_cut(msg, state))
         res, problem_type = await utils.generate_classified_response(prompt, user_id)
         if not res or not res[0]:
-            return await mesg.edit_text(text.gen_error)
+            return await mesg.edit_text(const_answers["gen_error"])
         if msg.content_type == types.ContentType.VOICE:
-            out_filename = await utils.tts(res[0])
+            out_filename = await utils.speech.text_to_speech(res[0])
             # Отправка голосового сообщения
             path = Path("", out_filename)
             voice = FSInputFile(path)
@@ -96,27 +94,33 @@ async def response(msg: Message, state: FSMContext):
             #await state.set_state(Gen.order_problem[problem_type])
             user_last_interaction[user_id] = datetime.datetime.now()
 
-@router.message(Gen.order_late)
-@flags.chat_action("typing")
+
+async def other_problems(msg: Message, state: FSMContext):
+    instruction = instructions["problem"][0]["extend"]
+    # тправляет вопрос пользователя в службу поддержки
+    print(msg.text) #вопрос пользователя
+    support_response = input()
+    # Бот отправляет ответ службы поддержки пользователю
+
+
 async def order_late(msg: Message, state: FSMContext):
+    instruction = instructions["problem"][1]["extend"]
     print("Вы задерживаетесь с доставкой заказа. Вы привезете заказ?")
     delivery_response = input("Да/Нет")
     #     обработать ответ с помощью джпт и отправить клиенту ответ
 
 
-@router.message(Gen.order_damaged)
-@flags.chat_action("typing")
 async def order_damaged(msg: Message, state: FSMContext):
+    instruction = instructions["problem"][2]["extend"]
     photo = msg.photo
     print("Данный товар считается поврежденным?")
     support_response = input("Да/Нет")
     #     обработать ответ с помощью джпт и отправить клиенту ответ
     # отправляет клиенту купон
 
-@router.message(Gen.order_other_problem)
-@flags.chat_action("typing")
-async def other_problems(msg: Message, state: FSMContext):
-    # тправляет вопрос пользователя в службу поддержки
-    print(msg.text) #вопрос пользователя
-    support_response = input()
-    # Бот отправляет ответ службы поддержки пользователю
+
+async def order_wrong_cut(msg: Message, state: FSMContext):
+    instruction = instructions["problem"][3]["extend"]
+    user_question = msg.text + "Молоко 3 , Мёд 1"
+    res = await utils.generate_response(user_question, instruction)
+    return res

@@ -24,3 +24,5 @@ typing_extensions==4.5.0
 urllib3==1.26.15
 yarl==1.8.2
 YooMoney==0.1.0
+PyYAML~=6.0.1
+speechkit~=2.2.2
