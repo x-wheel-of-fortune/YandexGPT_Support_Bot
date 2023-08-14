@@ -31,7 +31,7 @@ class GPTAssistant:
             "generationOptions": {
                 "partialResults": False,
                 "temperature": temperature,
-                "maxTokens": "500"
+                "maxTokens": "2000"
             },
             "instructionText": instruction_text,
             "requestText": user_question
@@ -94,7 +94,7 @@ async def classify(
         temperature,
     )[0]
 
-    if not s or not s.isdigit() or int(s) > 4 or int(s) < 0:
+    if not s or not s.isdigit() or int(s) > 5 or int(s) < 0:
         s = 0
 
     return int(s)
@@ -112,7 +112,9 @@ async def generate_response(
 
 async def generate_classified_response(user_question,user_id):
     problem_type = await classify(user_question)
-    instruction = text.base_instruction + text.problem_instructions[problem_type] + text.database_instruction + str(get_by_id(user_id))
+    print("Категория вопроса:", problem_type)
+    instruction = text.base_instruction + text.database_instruction + str(
+        get_by_id(user_id)) + text.problem_instructions[problem_type]
     res = None
     while not res or not res[0]:
         res = await generate_response(user_question, instruction)
