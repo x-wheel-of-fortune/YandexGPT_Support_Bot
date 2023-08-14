@@ -73,7 +73,7 @@ async def generate_response(
         instruction_text=text.base_instruction,
         temperature=0.3,
 ):
-    time.sleep(1) # to avoid 429
+
     return assistant.generate_response(
         user_question, instruction_text, temperature)
 
@@ -84,6 +84,8 @@ async def generate_classified_response(user_question,user_id):
     res = None
     while not res or not res[0]:
         res = await generate_response(user_question, instruction)
+        if not res or not res[0]:
+            time.sleep(1)
     return res
 
 
