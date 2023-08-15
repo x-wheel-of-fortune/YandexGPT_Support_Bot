@@ -7,7 +7,7 @@ def get_by_id(user_id: int):
     cursor = conn.cursor()
 
     # Выполнение запроса
-    query = f"SELECT * FROM users_data_yandex WHERE user_id = ?"
+    query = f"SELECT * FROM users_data_yandex WHERE user_id = ? LIMIT 1"
     cursor.execute(query, (user_id,))
 
     # Извлечение данных

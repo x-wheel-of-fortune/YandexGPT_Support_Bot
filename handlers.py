@@ -1,16 +1,19 @@
+import datetime
 import os
 import yaml
-import utils
-import datetime
+
 from aiogram import F, Router, types, Bot, Dispatcher, flags
 from aiogram.filters import Command, Text, StateFilter
 from aiogram.types import Message, FSInputFile
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types.callback_query import CallbackQuery
+
+import keyboard
+import utils
+
 from states import Gen
 from pathlib import Path
-import keyboard
 
 
 with open('resources/instructions.yaml', encoding="utf8") as file:
@@ -31,7 +34,7 @@ user_last_interaction = {}
 @router.message(StateFilter(None))
 async def start_handler(msg: Message, state: FSMContext):
     await msg.answer(const_answers["greet"].format(name=msg.from_user.full_name))
-    user_id = 7 #msg.from_user.id
+    user_id = 7  # msg.from_user.id
     await state.set_state(Gen.waiting_for_question)
     user_last_interaction[user_id] = datetime.datetime.now()
 
@@ -57,7 +60,7 @@ async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
 @router.message(Gen.waiting_for_question)
 @flags.chat_action("typing")
 async def response(msg: Message, state: FSMContext):
-    user_id = 7 #msg.from_user.id
+    user_id = 7  # msg.from_user.id
     if user_id not in user_last_interaction or (datetime.datetime.now() - user_last_interaction[user_id]) >= SESSION_TIMEOUT:
         print("previous session ran out")
         await start_handler(msg, state)
@@ -97,7 +100,7 @@ async def response(msg: Message, state: FSMContext):
 
 async def other_problems(msg: Message, state: FSMContext):
     instruction = instructions["problem"][0]["extend"]
-    # тправляет вопрос пользователя в службу поддержки
+    # Отправляет вопрос пользователя в службу поддержки
     print(msg.text) #вопрос пользователя
     support_response = input()
     # Бот отправляет ответ службы поддержки пользователю

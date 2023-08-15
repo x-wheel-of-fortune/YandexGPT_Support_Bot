@@ -23,6 +23,7 @@ def extract_number_from_string(input_string):
     # Если числа не найдены, возвращаем 0
     return 0
 
+
 async def classify_gorbenko(
         user_question: str,
         instruction_text: str = instructions["classification_prompt"],
@@ -38,7 +39,12 @@ async def classify_gorbenko(
 async def generate_classified_response_gorbenko(user_question, user_id):
     problem_type = await classify_gorbenko(user_question)
     print("Категория вопроса:", problem_type)
-    instruction = instructions["base"] + instructions["database"] + str(get_by_id(user_id)) + instructions["problem"][problem_type]["base"]
+    instruction = ''.join([
+        instructions["base"],
+        instructions["database"],
+        str(get_by_id(user_id)),
+        instructions["problem"][problem_type]["base"],
+    ])
     res = None
     while not res or not res[0]:
         res = await utils.generate_response(user_question, instruction)

@@ -1,9 +1,8 @@
-#python -m pip install speechkit
 from speechkit import Session, SpeechSynthesis, ShortAudioRecognition
 import yaml
 
 
-class CSpeechKit:
+class YandexSpeechKit:
 
     __api_key_session = Session
 

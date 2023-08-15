@@ -1,7 +1,7 @@
 import requests
 
 
-class GPTAssistant:
+class YandexGPTAssistant:
     def __init__(self, api_key, folder_id):
         self.api_key = api_key
         self.folder_id = folder_id
@@ -46,7 +46,7 @@ class GPTAssistant:
             user_question: str,
             instruction_text: str,
             temperature: float = 0.3,
-            prev_messages: [{str:str}] = [],
+            prev_messages: [{str: str}] = [],
     ):
         prompt_data = {
             "model": "general",

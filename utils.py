@@ -1,5 +1,5 @@
-from GPTAssistant import GPTAssistant
-from SpeechKit import CSpeechKit
+from yandex_gpt_assistant import YandexGPTAssistant
+from yandex_speech_kit import YandexSpeechKit
 import yaml
 import time
 import database_queries
@@ -10,8 +10,8 @@ with open('resources/instructions.yaml', encoding="utf8") as file:
 with open('config.yaml', encoding="utf8") as file:
     cfg = yaml.safe_load(file)
 
-assistant = GPTAssistant(cfg["GPT_API_KEY"], cfg["FOLDER_ID"])
-speech = CSpeechKit()
+assistant = YandexGPTAssistant(cfg["GPT_API_KEY"], cfg["FOLDER_ID"])
+speech = YandexSpeechKit()
 
 
 async def classify(
