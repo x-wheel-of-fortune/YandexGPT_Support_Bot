@@ -1,10 +1,11 @@
 import re
-import utils
 import asyncio
-from database_queries import get_by_id
 
-with open('resources/instructions.yaml', encoding="utf8") as file:
-    instructions = yaml.safe_load(file)
+import utils
+from database_queries import get_by_id
+from resources.yaml_resource import load_yaml_resource
+
+instructions = load_yaml_resource('resources/instructions.yaml')
 
 user_text = "Мой заказ пришел с червяками!"
 

@@ -19,7 +19,7 @@ from resources.yaml_resource import load_yaml_resource
 
 cfg = load_yaml_resource('resources/config.yaml')
 instructions = load_yaml_resource('resources/instructions.yaml')
-const_answers = load_yaml_resource('resources/config.yaml')
+const_answers = load_yaml_resource('resources/const_answers.yaml')
 
 
 bot = Bot(token=cfg["BOT_TOKEN"], parse_mode=ParseMode.HTML)
@@ -63,38 +63,38 @@ async def response(msg: Message, state: FSMContext):
     if user_id not in user_last_interaction or (datetime.datetime.now() - user_last_interaction[user_id]) >= SESSION_TIMEOUT:
         print("previous session ran out")
         await start_handler(msg, state)
+        return
+    if msg.content_type == types.ContentType.VOICE:
+        file_id = msg.voice.file_id
+        file = await bot.get_file(file_id)
+        file_path = file.file_path
+        file_on_disk = Path("", f"{file_id}.tmp")
+        await bot.download_file(file_path, destination=file_on_disk)
+        prompt = await utils.speech.text_to_speech(file_on_disk)
+        print(prompt)
+        os.remove(file_on_disk)  # Удаление временного файла
     else:
-        if msg.content_type == types.ContentType.VOICE:
-            file_id = msg.voice.file_id
-            file = await bot.get_file(file_id)
-            file_path = file.file_path
-            file_on_disk = Path("", f"{file_id}.tmp")
-            await bot.download_file(file_path, destination=file_on_disk)
-            prompt = await utils.stt(file_on_disk)
-            print(prompt)
-            os.remove(file_on_disk)  # Удаление временного файла
-        else:
-            prompt = msg.text
-        mesg = await msg.answer(const_answers["gen_wait"])
-        print(await order_wrong_cut(msg, state))
-        res, problem_type = await utils.generate_classified_response(prompt, user_id)
-        if not res or not res[0]:
-            return await mesg.edit_text(const_answers["gen_error"])
-        if msg.content_type == types.ContentType.VOICE:
-            out_filename = await utils.speech.text_to_speech(res[0])
-            # Отправка голосового сообщения
-            path = Path("", out_filename)
-            voice = FSInputFile(path)
-            await bot.send_voice(msg.from_user.id, voice)
+        prompt = msg.text
+    mesg = await msg.answer(const_answers["gen_wait"])
+    print(await order_wrong_cut(msg, state))
+    res, problem_type = await utils.generate_classified_response(prompt, user_id)
+    if not res or not res[0]:
+        return await mesg.edit_text(const_answers["gen_error"])
+    if msg.content_type == types.ContentType.VOICE:
+        out_filename = await utils.speech.text_to_speech(res[0])
+        # Отправка голосового сообщения
+        path = Path("", out_filename)
+        voice = FSInputFile(path)
+        await bot.send_voice(msg.from_user.id, voice)
 
-            os.remove(out_filename)  # Удаление временного файла
-            await state.set_state(Gen.order_problem[problem_type])
-            user_id = msg.from_user.id
-            user_last_interaction[user_id] = datetime.datetime.now()
-        else:
-            await mesg.edit_text(res[0], disable_web_page_preview=True)
-            #await state.set_state(Gen.order_problem[problem_type])
-            user_last_interaction[user_id] = datetime.datetime.now()
+        os.remove(out_filename)  # Удаление временного файла
+        await state.set_state(Gen.order_problem[problem_type])
+        user_id = msg.from_user.id
+        user_last_interaction[user_id] = datetime.datetime.now()
+    else:
+        await mesg.edit_text(res[0], disable_web_page_preview=True)
+        #await state.set_state(Gen.order_problem[problem_type])
+        user_last_interaction[user_id] = datetime.datetime.now()
 
 
 async def other_problems(msg: Message, state: FSMContext):

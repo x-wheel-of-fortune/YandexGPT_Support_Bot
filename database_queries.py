@@ -25,3 +25,4 @@ def get_by_id(user_id: int):
         user_data_dict = "У этого пользователя нет активных заказов."
 
     return user_data_dict
+
