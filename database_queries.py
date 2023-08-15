@@ -3,7 +3,7 @@ import sqlite3
 
 def get_by_id(user_id: int):
     # Подключение к базе данных
-    conn = sqlite3.connect('users_yandex.db')
+    conn = sqlite3.connect('resources/users_yandex.db')
     cursor = conn.cursor()
 
     # Выполнение запроса
