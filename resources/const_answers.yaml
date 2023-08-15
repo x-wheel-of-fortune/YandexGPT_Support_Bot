@@ -14,6 +14,10 @@ validation_failed: |+
   ❌ Запрос не прошёл валидацию.
 case_completed: |+
   ✅️ Вопрос решён
+is_order_expired: |+
+  Товар просрочен?
+is_order_damaged: |+
+  Товар поврежден?
 greet: |+
   Здравствуйте!
   

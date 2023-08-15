@@ -26,3 +26,5 @@ def get_by_id(user_id: int):
 
     return user_data_dict
 
+
+print(get_by_id(7))

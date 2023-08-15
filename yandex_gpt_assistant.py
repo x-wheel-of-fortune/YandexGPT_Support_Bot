@@ -50,7 +50,7 @@ class YandexGPTAssistant:
             "generationOptions": {
                 "partialResults": False,
                 "temperature": temperature,
-                "maxTokens": "500"
+                "maxTokens": "2000"
             },
             "messages": prev_messages,
             "instructionText": instruction_text,

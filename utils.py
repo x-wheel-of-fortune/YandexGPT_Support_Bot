@@ -43,8 +43,12 @@ async def generate_response(
 async def generate_classified_response(user_question, user_id):
     problem_type = await classify(user_question)
     print("Категория вопроса:", problem_type)
-    instruction = instructions["base"] + instructions["database"] + str(
-        database_queries.get_by_id(user_id)) + instructions["problem"][problem_type]["base"]
+    instruction = "".join([
+        instructions["base"],
+        instructions["database"],
+        str(database_queries.get_by_id(user_id)),
+        instructions["problem"][problem_type]["base"],
+    ])
     res = None
     while not res or not res[0]:
         res = await generate_response(user_question, instruction)
