@@ -1,7 +1,3 @@
-
-#with open('const_answers.yaml', encoding="utf8") as file:
-#    const_answers = yaml.safe_load(file)
-
 gen_text: В чём заключается ваш вопрос?
 end_session_text: Рады, что смогли решить ваш вопрос, хорошего дня!
 gen_error: 🚫 Ошибка генерации

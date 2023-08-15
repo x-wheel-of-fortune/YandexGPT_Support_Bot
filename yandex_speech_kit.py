@@ -1,27 +1,42 @@
 from speechkit import Session, SpeechSynthesis, ShortAudioRecognition
-import yaml
 
 
 class YandexSpeechKit:
+    def __init__(self, api_key: str):
+        self._session = Session.from_api_key(
+            api_key,
+            x_client_request_id_header=True,
+            x_data_logging_enabled=True,
+        )
+        self._synthesize_audio = SpeechSynthesis(self._session)
+        self._recognize_short_audio = ShortAudioRecognition(self._session)
 
-    __api_key_session = Session
+    async def text_to_speech(
+            self,
+            message_text: str,
+            path: str = 'audio.ogg',
+            person_voice: str = 'oksana',
+            file_format: str = 'oggopus',
+            rate: str = '16000',
+    ):
+        self._synthesize_audio.synthesize(
+            path,
+            text=message_text,
+            voice=person_voice,
+            format=file_format,
+            sampleRateHertz=rate,
+        )
 
-    def __init__(self):
-        with open('config.yaml', encoding="utf8") as file:
-            cfg = yaml.safe_load(file)
-        self.__api_key_session = Session.from_api_key(cfg["SPEECH_KIT_API_KEY"], x_client_request_id_header=True, x_data_logging_enabled=True)
-
-    async def text_to_speech(self, message_text, path='audio.ogg', person_voice='oksana', file_format='oggopus', rate='16000'):
-        synthesize_audio = SpeechSynthesis(self.__api_key_session)
-        synthesize_audio.synthesize(path,
-                                    text=message_text,
-                                    voice=person_voice,
-                                    format=file_format,
-                                    sampleRateHertz=rate)
-
-    async def speech_to_text(self, file_path, file_format='oggopus', rate='16000'):
-        recognize_short_audio = ShortAudioRecognition(self.__api_key_session)
-        with open(file_path, "rb") as f:
+    async def speech_to_text(
+            self,
+            file_path: str,
+            file_format: str = 'oggopus',
+            rate: str = '16000',
+    ):
+        with open(file_path, 'rb') as f:
             data = f.read()
-        text = recognize_short_audio.recognize(data, format=file_format, sampleRateHertz=rate)
-        return text
+        return self._recognize_short_audio.recognize(
+            data,
+            format=file_format,
+            sampleRateHertz=rate,
+        )

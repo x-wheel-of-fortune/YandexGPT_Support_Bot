@@ -1,17 +1,17 @@
-from yandex_gpt_assistant import YandexGPTAssistant
-from yandex_speech_kit import YandexSpeechKit
-import yaml
 import time
 import database_queries
 
+from resources.yaml_resource import load_yaml_resource
+from yandex_gpt_assistant import YandexGPTAssistant
+from yandex_speech_kit import YandexSpeechKit
 
-with open('resources/instructions.yaml', encoding="utf8") as file:
-    instructions = yaml.safe_load(file)
-with open('config.yaml', encoding="utf8") as file:
-    cfg = yaml.safe_load(file)
+
+instructions = load_yaml_resource('resources/instructions.yaml')
+cfg = load_yaml_resource('resources/config.yaml')
+
 
 assistant = YandexGPTAssistant(cfg["GPT_API_KEY"], cfg["FOLDER_ID"])
-speech = YandexSpeechKit()
+speech = YandexSpeechKit(cfg['SPEECH_KIT_API_KEY'])
 
 
 async def classify(
@@ -40,7 +40,7 @@ async def generate_response(
         user_question, instruction_text, temperature)
 
 
-async def generate_classified_response(user_question,user_id):
+async def generate_classified_response(user_question, user_id):
     problem_type = await classify(user_question)
     print("Категория вопроса:", problem_type)
     instruction = instructions["base"] + instructions["database"] + str(

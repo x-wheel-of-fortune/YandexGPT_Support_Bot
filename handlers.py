@@ -14,14 +14,13 @@ import utils
 
 from states import Gen
 from pathlib import Path
+from resources.yaml_resource import load_yaml_resource
 
 
-with open('resources/instructions.yaml', encoding="utf8") as file:
-    instructions = yaml.safe_load(file)
-with open('config.yaml', encoding="utf8") as file:
-    cfg = yaml.safe_load(file)
-with open('resources/const_answers.yaml', encoding="utf8") as file:
-    const_answers = yaml.safe_load(file)
+cfg = load_yaml_resource('resources/config.yaml')
+instructions = load_yaml_resource('resources/instructions.yaml')
+const_answers = load_yaml_resource('resources/config.yaml')
+
 
 bot = Bot(token=cfg["BOT_TOKEN"], parse_mode=ParseMode.HTML)
 router = Router()
