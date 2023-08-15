@@ -13,11 +13,11 @@ from pathlib import Path
 import keyboard
 
 
-with open('instructions.yaml', encoding="utf8") as file:
+with open('resources/instructions.yaml', encoding="utf8") as file:
     instructions = yaml.safe_load(file)
 with open('config.yaml', encoding="utf8") as file:
     cfg = yaml.safe_load(file)
-with open('const_answers.yaml', encoding="utf8") as file:
+with open('resources/const_answers.yaml', encoding="utf8") as file:
     const_answers = yaml.safe_load(file)
 
 bot = Bot(token=cfg["BOT_TOKEN"], parse_mode=ParseMode.HTML)

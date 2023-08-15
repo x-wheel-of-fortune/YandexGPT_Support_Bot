@@ -5,7 +5,7 @@ import time
 import database_queries
 
 
-with open('instructions.yaml', encoding="utf8") as file:
+with open('resources/instructions.yaml', encoding="utf8") as file:
     instructions = yaml.safe_load(file)
 with open('config.yaml', encoding="utf8") as file:
     cfg = yaml.safe_load(file)

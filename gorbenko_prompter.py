@@ -3,7 +3,7 @@ import utils
 import asyncio
 from database_queries import get_by_id
 
-with open('instructions.yaml', encoding="utf8") as file:
+with open('resources/instructions.yaml', encoding="utf8") as file:
     instructions = yaml.safe_load(file)
 
 user_text = "Мой заказ пришел с червяками!"
