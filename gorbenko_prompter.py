@@ -1,13 +1,13 @@
 import re
-import asyncio
-
 import utils
+import asyncio
 from database_queries import get_by_id
-from resources.yaml_resource import load_yaml_resource
+import yaml
 
-instructions = load_yaml_resource('resources/instructions.yaml')
+with open('resources//instructions.yaml', encoding="utf8") as file:
+    instructions = yaml.safe_load(file)
 
-user_text = "Мой заказ пришел с червяками!"
+user_text = "Как оплачивать"
 
 ###########################################################################################
 assistant = utils.assistant
@@ -24,15 +24,14 @@ def extract_number_from_string(input_string):
     # Если числа не найдены, возвращаем 0
     return 0
 
-
 async def classify_gorbenko(
         user_question: str,
         instruction_text: str = instructions["classification_prompt"],
-        temperature: float = 0.01,
+        temperature: float = 0.1,
 ):
     s = assistant.generate_response(user_question, instruction_text, temperature)[0]
     s = extract_number_from_string(s)
-    if s > 5 or s < 0:
+    if s > 9 or s < 0:
         s = 0
     return s
 
@@ -40,12 +39,7 @@ async def classify_gorbenko(
 async def generate_classified_response_gorbenko(user_question, user_id):
     problem_type = await classify_gorbenko(user_question)
     print("Категория вопроса:", problem_type)
-    instruction = ''.join([
-        instructions["base"],
-        instructions["database"],
-        str(get_by_id(user_id)),
-        instructions["problem"][problem_type]["base"],
-    ])
+    instruction = instructions["base"] + instructions["database"] + str(get_by_id(user_id)) + instructions["problem"][problem_type]["base"]
     res = None
     while not res or not res[0]:
         res = await utils.generate_response(user_question, instruction)

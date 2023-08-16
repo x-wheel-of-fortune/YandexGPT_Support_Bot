@@ -29,8 +29,9 @@ exit_kb = ReplyKeyboardMarkup(
 choice_of_answer_order_damaged = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="Карта"),
+            KeyboardButton(text="Товар"),
             KeyboardButton(text="Купон"),
+            KeyboardButton(text="Карта"),
         ]
     ],
     resize_keyboard=True,

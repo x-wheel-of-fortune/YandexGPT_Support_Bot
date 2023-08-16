@@ -134,30 +134,43 @@ async def order_damaged(msg: Message, state: FSMContext):
 
 @router.message(Gen.waiting_for_damaged_photo)
 async def order_damaged_photo(msg: Message, state: FSMContext):
+    await msg.answer(const_answers["gen_wait"])
     photo = msg.photo
     print("Данный товар считается поврежденным?")
-    support_response = input("Да/Нет ")
+    # support_response = input("Да/Нет ")
+    support_response = "Да"
     if support_response == "Да":
-        res = await utils.generate_response("", instruction_text=instructions["base"] + instructions["problem"][2]["damaged"] + instructions["database"] + str(get_by_id(user_id)))
+        instruction = instructions["base"] + instructions["problem"][2]["damaged"] + instructions["database"] + str(get_by_id(user_id))
+        res = await utils.generate_response("", instruction_text=instruction)
         #    Вставить кнопки в клавиатуру пользователя при нажатии на которые отправится сообщение
         kb = keyboard.choice_of_answer_order_damaged
         await msg.answer(res[0], reply_markup=kb)
         await state.set_state(Gen.waiting_for_refund_method_damaged)
     else:
-        res = await utils.generate_response("", instruction_text=instructions["base"] + instructions["problem"][2]["not_damaged"] + instructions["database"] + str(get_by_id(user_id)))
+        instruction = instructions["base"] + instructions["problem"][2]["not_damaged"] + instructions["database"] + str(get_by_id(user_id))
+        res = await utils.generate_response("", instruction_text=instruction)
         await state.set_state(Gen.waiting_for_other_question)
-    await msg.answer(res[0])
+        await msg.answer(res[0])
 
 
 @router.message(Gen.waiting_for_refund_method_damaged)
 async def choosing_refund_method_damaged(msg: Message, state: FSMContext):
-    res = msg.text
-    ans = ""
-    if res == "Карта":
-        ans = "Вы выбрали карту"
-    elif res == "Купон":
-        ans = "Вы выбрали купон"
-    await msg.answer(ans)
+    await msg.answer(const_answers["gen_wait"])
+    ans = msg.text
+    res = ""
+    if ans == "Товар":
+        instruction = instructions["base"] + instructions["selected_answer_damaged"]["product"] + instructions[
+            "database"] + str(get_by_id(user_id))
+        res = await utils.generate_response("", instruction_text=instruction)
+    elif ans == "Купон":
+        instruction = instructions["base"] + instructions["selected_answer_damaged"]["coupon"] + instructions[
+            "database"] + str(get_by_id(user_id))
+        res = await utils.generate_response("", instruction_text=instruction)
+    elif ans == "Карта":
+        instruction = instructions["base"] + instructions["selected_answer_damaged"]["card"] + instructions[
+            "database"] + str(get_by_id(user_id))
+        res = await utils.generate_response("", instruction_text=instruction)
+    await msg.answer(res[0])
 
 async def order_expired(msg: Message, state: FSMContext):
     instruction = instructions["base"] + instructions["problem"][3]["base"] + instructions["database"] + str(get_by_id(user_id))
@@ -168,13 +181,17 @@ async def order_expired(msg: Message, state: FSMContext):
 
 @router.message(Gen.waiting_for_expired_photo)
 async def order_expired_photo(msg: Message, state: FSMContext):
+    await msg.answer(const_answers["gen_wait"])
     photo = msg.photo
     print("Данный товар считается с истекшим срокос годности?")
-    support_response = input("Да/Нет ")
+    # support_response = input("Да/Нет ")
+    support_response = "Да"
     if support_response == "Да":
-        res = await utils.generate_response("", instruction_text=instructions["base"] + instructions["problem"][3]["expired"] + instructions["database"] + str(get_by_id(user_id)))
+        instruction = instructions["base"] + instructions["problem"][3]["expired"] + instructions["database"] + str(get_by_id(user_id))
+        res = await utils.generate_response("", instruction_text=instruction)
     else:
-        res = await utils.generate_response("", instruction_text=instructions["base"] + instructions["problem"][3]["not_expired"] + instructions["database"] + str(get_by_id(user_id)))
+        instruction = instructions["base"] + instructions["problem"][3]["not_expired"] + instructions["database"] + str(get_by_id(user_id))
+        res = await utils.generate_response("", instruction_text=instruction)
     await msg.answer(res[0])
     await state.set_state(Gen.waiting_for_other_question)
 
