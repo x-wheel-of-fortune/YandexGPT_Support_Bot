@@ -121,8 +121,10 @@ async def order_late(msg: Message, state: FSMContext):
         res = await utils.generate_response(user_question, instruction_yes)
     else:
         res = await utils.generate_response(user_question, instruction_no)
-    await msg.answer(res[0] + "\nВаш промокод на скидку: "+utils.generate_ticket())
-    await state.set_state(Gen.waiting_for_other_question)
+    await msg.answer(res[0])
+    await state.set_state(Gen.waiting_for_refund_method_damaged)
+
+
 
 
 
@@ -170,7 +172,7 @@ async def choosing_refund_method_damaged(msg: Message, state: FSMContext):
         instruction = instructions["base"] + instructions["selected_answer_damaged"]["card"] + instructions[
             "database"] + str(get_by_id(user_id))
         res = await utils.generate_response("", instruction_text=instruction)
-    await msg.answer(res[0])
+    await msg.answer(res[0] +"\nВаш купон на следующий заказ: " + utils.generate_ticket())
 
 async def order_expired(msg: Message, state: FSMContext):
     instruction = instructions["base"] + instructions["problem"][3]["base"] + instructions["database"] + str(get_by_id(user_id))
@@ -183,7 +185,7 @@ async def order_expired(msg: Message, state: FSMContext):
 async def order_expired_photo(msg: Message, state: FSMContext):
     await msg.answer(const_answers["gen_wait"])
     photo = msg.photo
-    print("Данный товар считается с истекшим срокос годности?")
+    print("Данный товар с истекшим сроком годности?")
     # support_response = input("Да/Нет ")
     support_response = "Да"
     if support_response == "Да":
