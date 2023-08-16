@@ -24,12 +24,15 @@ def extract_number_from_string(input_string):
     # Если числа не найдены, возвращаем 0
     return 0
 
+
 async def classify_gorbenko(
         user_question: str,
         instruction_text: str = instructions["classification_prompt"],
         temperature: float = 0.1,
 ):
-    s = assistant.generate_response(user_question, instruction_text, temperature)[0]
+    s = \
+    assistant.generate_response(user_question, instruction_text, temperature)[
+        0]
     s = extract_number_from_string(s)
     if s > 9 or s < 0:
         s = 0
@@ -39,7 +42,8 @@ async def classify_gorbenko(
 async def generate_classified_response_gorbenko(user_question, user_id):
     problem_type = await classify_gorbenko(user_question)
     print("Категория вопроса:", problem_type)
-    instruction = instructions["base"] + instructions["database"] + str(get_by_id(user_id)) + instructions["problem"][problem_type]["base"]
+    instruction = instructions["base"] + instructions["database"] + str(
+        get_by_id(user_id)) + instructions["problem"][problem_type]["base"]
     res = None
     while not res or not res[0]:
         res = await utils.generate_response(user_question, instruction)
@@ -50,4 +54,6 @@ if __name__ == '__main__':
     async def getans():
         ans = await generate_classified_response_gorbenko(user_text, user_id=7)
         print(f"\nYandexGPT:\n\n{ans[0]}")
+
+
     asyncio.run(getans())

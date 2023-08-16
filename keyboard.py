@@ -6,12 +6,13 @@ from aiogram.types import (
     ReplyKeyboardRemove,
 )
 
-
 menu = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text="Текстовый режим", callback_data="text_response"),
-            InlineKeyboardButton(text="Голосовой режим", callback_data="audio_response")
+            InlineKeyboardButton(text="Текстовый режим",
+                                 callback_data="text_response"),
+            InlineKeyboardButton(text="Голосовой режим",
+                                 callback_data="audio_response")
         ],
     ],
 )
@@ -37,4 +38,3 @@ choice_of_answer_order_damaged = ReplyKeyboardMarkup(
     resize_keyboard=True,
     one_time_keyboard=True,
 )
-

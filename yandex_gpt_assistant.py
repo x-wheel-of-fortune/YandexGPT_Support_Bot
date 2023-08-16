@@ -31,7 +31,8 @@ class YandexGPTAssistant:
 
         if response.status_code == 200:
             result = response.json()["result"]["alternatives"][0]["text"]
-            num_tokens = response.json()["result"]["alternatives"][0]["num_tokens"]
+            num_tokens = response.json()["result"]["alternatives"][0][
+                "num_tokens"]
             return result, num_tokens
         else:
             print(f"Request failed with status code: {response.status_code}")

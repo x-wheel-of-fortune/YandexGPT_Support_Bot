@@ -8,10 +8,8 @@ from resources.yaml_resource import load_yaml_resource
 from yandex_gpt_assistant import YandexGPTAssistant
 from yandex_speech_kit import YandexSpeechKit
 
-
 instructions = load_yaml_resource('resources/instructions.yaml')
 cfg = load_yaml_resource('resources/config.yaml')
-
 
 assistant = YandexGPTAssistant(cfg["GPT_API_KEY"], cfg["FOLDER_ID"])
 speech = YandexSpeechKit(cfg['SPEECH_KIT_API_KEY'])
@@ -59,14 +57,17 @@ async def generate_classified_response(user_question, user_id):
             time.sleep(1)
     return res, problem_type
 
+
 def generate_ticket():
     characters = string.ascii_letters + string.digits
     random_string = ''.join(random_choice(characters) for _ in range(8))
     return random_string
 
+
 def generate_support_answer():
     choises = ["Да", "Нет"]
     return random_choice(choises)
+
 
 if __name__ == "__main__":
     print(generate_support_answer())
