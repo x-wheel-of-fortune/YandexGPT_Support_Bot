@@ -64,5 +64,9 @@ def generate_ticket():
     random_string = ''.join(random_choice(characters) for _ in range(8))
     return random_string
 
+def generate_support_answer():
+    choises = ["Да", "Нет"]
+    return random_choice(choises)
+
 if __name__ == "__main__":
-    print(generate_ticket())
+    print(generate_support_answer())
