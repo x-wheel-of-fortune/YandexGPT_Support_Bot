@@ -166,13 +166,13 @@ async def choosing_refund_method_damaged(msg: Message, state: FSMContext):
         res = await utils.generate_response("", instruction_text=instruction)
     elif ans == "Купон":
         instruction = instructions["base"] + instructions["selected_answer_damaged"]["coupon"] + instructions[
-            "database"] + str(get_by_id(user_id))
+            "database"] + str(get_by_id(user_id)) + "Это купон для клиента, предоставь код купона клиенту"  + utils.generate_ticket()
         res = await utils.generate_response("", instruction_text=instruction)
     elif ans == "Карта":
         instruction = instructions["base"] + instructions["selected_answer_damaged"]["card"] + instructions[
             "database"] + str(get_by_id(user_id))
         res = await utils.generate_response("", instruction_text=instruction)
-    await msg.answer(res[0] +"\nВаш купон на следующий заказ: "  + utils.generate_ticket())
+    await msg.answer(res[0])
 
 async def order_expired(msg: Message, state: FSMContext):
     instruction = instructions["base"] + instructions["problem"][3]["base"] + instructions["database"] + str(get_by_id(user_id))
