@@ -27,6 +27,8 @@ router = Router()
 SESSION_TIMEOUT = datetime.timedelta(minutes=30)
 
 user_last_interaction = {}
+
+
 from database_queries import get_by_id
 user_id = 7
 @router.message(Command("start"))
@@ -136,11 +138,25 @@ async def order_damaged_photo(msg: Message, state: FSMContext):
     support_response = input("Да/Нет ")
     if support_response == "Да":
         res = await utils.generate_response("", instruction_text=instructions["base"] + instructions["problem"][2]["damaged"] + instructions["database"] + str(get_by_id(user_id)))
-
+        #    Вставить кнопки в клавиатуру пользователя при нажатии на которые отправится сообщение
+        kb = keyboard.choice_of_answer_order_damaged
+        await msg.answer(res[0], reply_markup=kb)
+        await state.set_state(Gen.waiting_for_refund_method_damaged)
     else:
         res = await utils.generate_response("", instruction_text=instructions["base"] + instructions["problem"][2]["not_damaged"] + instructions["database"] + str(get_by_id(user_id)))
+        await state.set_state(Gen.waiting_for_other_question)
     await msg.answer(res[0])
-    await state.set_state(Gen.waiting_for_other_question)
+
+
+@router.message(Gen.waiting_for_refund_method_damaged)
+async def choosing_refund_method_damaged(msg: Message, state: FSMContext):
+    res = msg.text
+    ans = ""
+    if res == "Карта":
+        ans = "Вы выбрали карту"
+    elif res == "Купон":
+        ans = "Вы выбрали купон"
+    await msg.answer(ans)
 
 async def order_expired(msg: Message, state: FSMContext):
     instruction = instructions["base"] + instructions["problem"][3]["base"] + instructions["database"] + str(get_by_id(user_id))

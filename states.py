@@ -7,6 +7,7 @@ class Gen(StatesGroup):
     waiting_for_expired_photo = State()
     waiting_for_wrong_order_description = State()
     waiting_for_other_question = State()
+    waiting_for_refund_method_damaged = State()
     order_problem = {
        2: waiting_for_damaged_photo,
        3: waiting_for_expired_photo,
