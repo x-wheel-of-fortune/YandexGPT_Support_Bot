@@ -125,7 +125,8 @@ async def order_late(msg: Message, state: FSMContext):
     instruction_yes = instructions["problem"][1]["delivery_goes"] + instructions["database"] + str(get_by_id(user_id))
     instruction_no = instructions["problem"][1]["delivery_failed"] + instructions["database"] + str(get_by_id(user_id))
     print("Вы задерживаетесь с доставкой. Вы привезете заказ?")
-    delivery_response = input("Да/Нет ")
+    # delivery_response = input("Да/Нет ")
+    delivery_response = utils.generate_support_answer()
     if delivery_response == "Да":
         res = await utils.generate_response(user_question, instruction_yes)
     else:
@@ -147,7 +148,7 @@ async def order_damaged_photo(msg: Message, state: FSMContext):
     photo = msg.photo
     print("Данный товар считается поврежденным?")
     # support_response = input("Да/Нет ")
-    support_response = "Да"
+    support_response = utils.generate_support_answer()
     if support_response == "Да":
         instruction = instructions["base"] + instructions["problem"][2]["damaged"] + instructions["database"] + str(get_by_id(user_id))
         res = await utils.generate_response("", instruction_text=instruction)
@@ -195,7 +196,7 @@ async def order_expired_photo(msg: Message, state: FSMContext):
     photo = msg.photo
     print("Данный товар с истекшим сроком годности?")
     # support_response = input("Да/Нет ")
-    support_response = "Да"
+    support_response = utils.generate_support_answer()
     if support_response == "Да":
         instruction = instructions["base"] + instructions["problem"][3]["expired"] + instructions["database"] + str(get_by_id(user_id))
         res = await utils.generate_response("", instruction_text=instruction)
