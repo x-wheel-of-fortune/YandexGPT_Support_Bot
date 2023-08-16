@@ -91,7 +91,6 @@ async def handle_response(msg: Message, state: FSMContext, instruction_key):
     instruction = instruction_key
     res = await utils.generate_response("", instruction)
     await msg.answer(res[0])
-    await state.set_state(Gen.waiting_for_question)
 
 
 async def other_problems(msg: Message, state: FSMContext):
@@ -101,6 +100,7 @@ async def other_problems(msg: Message, state: FSMContext):
             type[0]) > 1:
         await handle_response(msg, state,
                               instructions["problem"][0]["not_support"])
+        await state.set_state(Gen.waiting_for_question)
     else:
         await handle_response(msg, state,
                               instructions["problem"][0]["support"])
