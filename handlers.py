@@ -71,6 +71,7 @@ async def response(msg: Message, state: FSMContext):
     if not res or not res[0]:
         return await mesg.edit_text(const_answers["gen_error"])
     await send_message(msg, res, mesg, user_id)
+    await scenarios[problem_type](msg, state)
 
 
 
@@ -98,7 +99,6 @@ async def send_message(msg: Message, res, mesg, user_id):
         voice = FSInputFile(path)
         await bot.send_voice(msg.from_user.id, voice)
         os.remove(out_filename)
-        await state.set_state(Gen.order_problem[problem_type])
         user_id = msg.from_user.id
     user_last_interaction[user_id] = datetime.datetime.now()
 
@@ -132,3 +132,10 @@ async def order_wrong_cut(msg: Message, state: FSMContext):
     user_question = msg.text + "Молоко 3 , Мёд 1"
     res = await utils.generate_response(user_question, instruction)
     return res
+
+scenarios = {
+    0: other_problems,
+    1: order_late,
+    2: order_damaged,
+    3: order_wrong_cut,
+}
