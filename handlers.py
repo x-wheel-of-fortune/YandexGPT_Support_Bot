@@ -67,10 +67,7 @@ async def response(msg: Message, state: FSMContext):
     prompt = await receive_message(msg)
     mesg = await msg.answer(const_answers["gen_wait"])
     #print(await order_wrong_cut(msg, state))
-    res, problem_type = await utils.generate_classified_response(prompt, user_id)
-    if not res or not res[0]:
-        return await mesg.edit_text(const_answers["gen_error"])
-    await send_message(msg, res, mesg, user_id)
+    problem_type = await utils.classify(prompt)
     await scenarios[problem_type](msg, state)
 
 
@@ -117,26 +114,20 @@ async def order_late(msg: Message, state: FSMContext):
     instruction_yes = instructions["problem"][1]["delivery_goes"]
     instruction_no = instructions["problem"][1]["delivery_failed"]
     print("Вы задерживаетесь с доставкой. Вы привезете заказ?")
-    delivery_response = input("Да/Нет")
+    delivery_response = input("Да/Нет ")
     if delivery_response == "Да":
-        res = await utils.generate_response(user_question, instruction_yes)[0]
+        res = await utils.generate_response(user_question, instruction_yes)
     else:
-        res = await utils.generate_response(user_question, instruction_no)[0]
-    await msg.answer(res)
+        res = await utils.generate_response(user_question, instruction_no)
+    await msg.answer(res[0])
     await state.set_state(Gen.waiting_for_other_question)
 
 
 async def order_damaged(msg: Message, state: FSMContext):
+    instruction = instructions["problem"][3]["base"]
+    ans, _ = await utils.generate_response(msg.text , instruction)
+    await msg.answer(ans)  # Отправка ответа пользователю
     await state.set_state(Gen.waiting_for_damaged_photo)
-
-
-async def order_wrong_cut(msg: Message, state: FSMContext):
-    instruction = instructions["problem"][3]["extend"]
-    user_question = msg.text + "Молоко 3 , Мёд 1"
-    res = await utils.generate_response(user_question, instruction)
-    return res
-
-
 
 @router.message(Gen.waiting_for_damaged_photo)
 async def order_damaged_photo(msg: Message, state: FSMContext):
@@ -149,6 +140,17 @@ async def order_damaged_photo(msg: Message, state: FSMContext):
         res = await utils.generate_response("", instruction_text=instructions["problem"][2]["not_damaged"])
     await msg.answer(res[0])
     await state.set_state(Gen.waiting_for_other_question)
+
+
+
+async def order_wrong_cut(msg: Message, state: FSMContext):
+    instruction = instructions["problem"][3]["extend"]
+    user_question = msg.text + "Молоко 3 , Мёд 1"
+    res = await utils.generate_response(user_question, instruction)
+    return res
+
+
+
 
 scenarios = {
     0: other_problems,
