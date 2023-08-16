@@ -30,7 +30,7 @@ async def classify(
 
     if not s or not s.isdigit() or int(s) > 5 or int(s) < 0:
         s = 0
-
+    print("Problem type:", s)
     return int(s)
 
 

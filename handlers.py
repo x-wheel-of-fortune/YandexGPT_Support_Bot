@@ -30,7 +30,7 @@ user_last_interaction = {}
 @router.message(Command("start"))
 @router.message(StateFilter(None))
 async def start_handler(msg: Message, state: FSMContext):
-    await msg.answer(
+    await send_message(msg,
         const_answers["greet"].format(name=msg.from_user.full_name))
     user_id = 7  # msg.from_user.id
     await state.set_state(Gen.waiting_for_question)
@@ -60,89 +60,90 @@ async def response(msg: Message, state: FSMContext):
 
 
 async def receive_message(message: Message):
-    if message.content_type == types.ContentType.TEXT:
+    if message.content_type == types.ContentType.TEXT:  
         return message.text
     file_id = message.voice.file_id
     file = await bot.get_file(file_id)
     file_path = file.file_path
-    file_on_disk = Path("", f"{file_id}.tmp")
+    file_on_disk = f"{file_id}.tmp"
     await bot.download_file(file_path, destination=file_on_disk)
-    prompt = await utils.speech.text_to_speech(file_on_disk)
+    prompt = await utils.speech.speech_to_text(file_on_disk)
     os.remove(file_on_disk)  # Удаление временного файла
     return prompt
 
 
-async def send_message(msg: Message, res, mesg, user_id):
+async def send_message(msg: Message, res):
+    user_id = msg.from_user.id
     if msg.content_type == types.ContentType.TEXT:
-        await mesg.edit_text(res[0], disable_web_page_preview=True)
+        await msg.answer(res, disable_web_page_preview=True)
     else:
         # голосовое сообщение
-        out_filename = await utils.speech.text_to_speech(res[0])
-        path = Path("", out_filename)
+        await utils.speech.text_to_speech(res)
+        out_filename = "audio.ogg"
+        path = out_filename
         voice = FSInputFile(path)
         await bot.send_voice(msg.from_user.id, voice)
-        os.remove(out_filename)
-        user_id = msg.from_user.id
+        os.remove(out_filename) 
     user_last_interaction[user_id] = datetime.datetime.now()
 
 
 # Common function to handle responses
 async def handle_response(msg: Message, state: FSMContext, instruction_key, next_state=None):
     instruction = instruction_key
-    res = await utils.generate_response("", instruction)
-    await msg.answer(res[0])
+    res = await utils.generate_response(await receive_message(msg), instruction)
+    await send_message(msg,res[0])
     if next_state:
         await state.set_state(next_state)
 
 
 async def other_problems(msg: Message, state: FSMContext):
-    type = await utils.generate_response(msg.text, instructions["problem"][0][
+    type = await utils.generate_response(await receive_message(msg), instructions["base"] + instructions["problem"][0][
         "classify"])
     if not type[0] or not type[0].isdigit() or int(type[0]) < 0 or int(
             type[0]) > 1:
         await handle_response(msg, state,
-                              instructions["problem"][0]["not_support"],
+                              instructions["base"] + instructions["problem"][0]["not_support"],
                               Gen.waiting_for_question)
     else:
         await handle_response(msg, state,
-                              instructions["problem"][0]["support"])
+                              instructions["base"] + instructions["problem"][0]["support"])
 
 
 async def order_late(msg: Message, state: FSMContext):
-    instruction_yes = instructions["problem"][1]["delivery_goes"] + \
-                      instructions["database"] + str(get_by_id(USER_ID))
-    instruction_no = instructions["problem"][1]["delivery_failed"] + \
+    instruction_yes = instructions["base"] + instructions["problem"][1]["delivery_goes"] + \
+                       instructions["database"] + str(get_by_id(USER_ID))
+    instruction_no = instructions["base"] + instructions["problem"][1]["delivery_failed"] + \
                      instructions["database"] + str(get_by_id(USER_ID))
     print("Вы задерживаетесь с доставкой. Вы привезете заказ?")
-    delivery_response = input("Да/Нет ")
-    # delivery_response = utils.generate_support_answer()
+    #delivery_response = input("Да/Нет ")
+    delivery_response = utils.generate_support_answer()
     if delivery_response == "Да":
         await handle_response(msg, state, instruction_yes,
                               Gen.waiting_for_question)
-        await msg.answer(
+        await send_message(msg,
             "\nВаш промокод на следующий заказ " + utils.generate_ticket())
 
     else:
         await handle_response(msg, state, instruction_no,
                               Gen.waiting_for_refund_method_damaged)
-        await msg.answer("",
+        await send_message(msg,"",
                          reply_markup=keyboard.choice_of_answer_order_damaged)
 
 
 async def order_damaged(msg: Message, state: FSMContext):
-    instruction = instructions["base"] + instructions["problem"][3]["base"] + \
-                  instructions["database"] + str(get_by_id(USER_ID))
+    instruction = instructions["base"] + instructions["problem"][2]["base"] + \
+                   instructions["database"] + str(get_by_id(USER_ID))
     await handle_response(msg, state, instruction,
                           Gen.waiting_for_damaged_photo)
 
 
 @router.message(Gen.waiting_for_damaged_photo)
 async def order_damaged_photo(msg: Message, state: FSMContext):
-    await msg.answer(const_answers["gen_wait"])
+    await send_message(msg,const_answers["gen_wait"])
     photo = msg.photo
     # print("Данный товар считается поврежденным?")
-    support_response = input("Да/Нет ")
-    # support_response = utils.generate_support_answer()
+    #support_response = input("Да/Нет ")
+    support_response = utils.generate_support_answer()
     if support_response == "Да":
         instruction = instructions["base"] + instructions["problem"][2][
             "damaged"] + instructions["database"] + str(get_by_id(USER_ID))
@@ -150,77 +151,79 @@ async def order_damaged_photo(msg: Message, state: FSMContext):
         #    Вставить кнопки в клавиатуру пользователя при нажатии на
         #    которые отправится сообщение
         kb = keyboard.choice_of_answer_order_damaged
-        await msg.answer(res[0], reply_markup=kb)
+        await send_message(msg,res[0], reply_markup=kb)
         await state.set_state(Gen.waiting_for_refund_method_damaged)
     else:
         instruction = instructions["base"] + instructions["problem"][2][
             "not_damaged"] + instructions["database"] + str(get_by_id(USER_ID))
         res = await utils.generate_response("", instruction_text=instruction)
-        await state.set_state(Gen.waiting_for_other_question)
-        await msg.answer(res[0])
+        await state.set_state(Gen.waiting_for_question)
+        await send_message(msg,res[0])
 
 
 @router.message(Gen.waiting_for_refund_method_damaged)
 async def choosing_refund_method_damaged(msg: Message, state: FSMContext):
-    await msg.answer(const_answers["gen_wait"])
-    ans = msg.text
+    await send_message(msg,const_answers["gen_wait"])
+    ans = await receive_message(msg)
     res = ""
     if ans == "Товар":
         instruction = instructions["base"] + \
-                      instructions["selected_answer_damaged"]["product"] + \
+                       instructions["selected_answer_damaged"]["product"] + \
                       instructions[
                           "database"] + str(get_by_id(USER_ID))
         res = await utils.generate_response("", instruction_text=instruction)
+        await state.set_state(Gen.waiting_for_question)
     elif ans == "Купон":
         instruction = instructions["base"] + \
-                      instructions["selected_answer_damaged"]["coupon"] + \
-                      instructions[
-                          "database"] + str(get_by_id(
-            USER_ID)) + "Это купон для клиента, предоставь код купона " \
-                        "клиенту" + utils.generate_ticket()
+                       instructions["selected_answer_damaged"]["coupon"] + \
+                       instructions[
+                          "database"] + str(get_by_id(USER_ID))
         res = await utils.generate_response("", instruction_text=instruction)
+        res = (res[0] + "\nВаш промокод: " + utils.generate_ticket(), "")
+        await state.set_state(Gen.waiting_for_question)
     elif ans == "Карта":
         instruction = instructions["base"] + \
                       instructions["selected_answer_damaged"]["card"] + \
                       instructions[
                           "database"] + str(get_by_id(USER_ID))
         res = await utils.generate_response("", instruction_text=instruction)
+        await state.set_state(Gen.waiting_for_question)
     else:
         res = "Пожалуйста, повторите Ваш вопрос."
-    await msg.answer(res[0])
+    await send_message(msg,res[0])
 
 
 async def order_expired(msg: Message, state: FSMContext):
     instruction = instructions["base"] + instructions["problem"][3]["base"] + \
-                  instructions["database"] + str(get_by_id(USER_ID))
-    res = await utils.generate_response(msg.text, instruction)
-    await msg.answer(res[0])  # Отправка ответа пользователю
+                   instructions["database"] + str(get_by_id(USER_ID))
+    res = await utils.generate_response(await receive_message(msg), instruction)
+    await send_message(msg,res[0])  # Отправка ответа пользователю
     await state.set_state(Gen.waiting_for_expired_photo)
 
 
 @router.message(Gen.waiting_for_expired_photo)
 async def order_expired_photo(msg: Message, state: FSMContext):
-    await msg.answer(const_answers["gen_wait"])
+    await send_message(msg,const_answers["gen_wait"])
     photo = msg.photo
     print("Данный товар с истекшим сроком годности?")
     # support_response = input("Да/Нет ")
     support_response = utils.generate_support_answer()
     if support_response == "Да":
         instruction = instructions["base"] + instructions["problem"][3][
-            "expired"] + instructions["database"] + str(get_by_id(USER_ID))
+            "expired"]  + instructions["database"] + str(get_by_id(USER_ID))
         res = await utils.generate_response("", instruction_text=instruction)
     else:
         instruction = instructions["base"] + instructions["problem"][3][
             "not_expired"] + instructions["database"] + str(get_by_id(USER_ID))
         res = await utils.generate_response("", instruction_text=instruction)
-    await msg.answer(res[0])
-    await state.set_state(Gen.waiting_for_other_question)
-
+    await send_message(msg,res[0])
+    await state.set_state(Gen.waiting_for_question)
 
 async def order_wrong(msg: Message, state: FSMContext):
     instruction = instructions["base"] + instructions["problem"][4]["support"]
     res = await utils.generate_response("", instruction)
-    await msg.answer(res[0])
+    await send_message(msg,res[0])
+    await state.set_state(Gen.waiting_for_question)
 
 
 # global_constants
