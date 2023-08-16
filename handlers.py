@@ -1,8 +1,8 @@
+import datetime
 import os
 from pathlib import Path
-import datetime
 
-from aiogram import F, Router, types, Bot, flags
+from aiogram import Router, types, Bot, flags
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.filters import Command, Text, StateFilter
 from aiogram.fsm.context import FSMContext
@@ -11,9 +11,9 @@ from aiogram.types.callback_query import CallbackQuery
 
 import keyboard
 import utils
+from database_queries import get_by_id
 from resources.yaml_resource import load_yaml_resource
 from states import Gen
-from database_queries import get_by_id
 
 # Load resources and configuration
 cfg = load_yaml_resource('resources/config.yaml')
@@ -88,22 +88,25 @@ async def send_message(msg: Message, res, mesg, user_id):
 
 # Common function to handle responses
 async def handle_response(msg: Message, state: FSMContext, instruction_key):
-    instruction = instructions["problem"][0][instruction_key]
+    instruction = instruction_key
     res = await utils.generate_response("", instruction)
     await msg.answer(res[0])
     await state.set_state(Gen.waiting_for_question)
 
-async def other_problems(msg: Message, state: FSMContext):
-    type = await utils.generate_response(msg.text, instructions["problem"][0]["classify"])
-    if not type[0] or not type[0].isdigit() or int(type[0]) < 0 or int(type[0]) > 1:
-        await handle_response(msg, state, "not_support")
-    else:
-        await handle_response(msg, state, "support")
 
+async def other_problems(msg: Message, state: FSMContext):
+    type = await utils.generate_response(msg.text, instructions["problem"][0][
+        "classify"])
+    if not type[0] or not type[0].isdigit() or int(type[0]) < 0 or int(
+            type[0]) > 1:
+        await handle_response(msg, state,
+                              instructions["problem"][0]["not_support"])
+    else:
+        await handle_response(msg, state,
+                              instructions["problem"][0]["support"])
 
 
 async def order_late(msg: Message, state: FSMContext):
-    user_question = msg.text
     instruction_yes = instructions["problem"][1]["delivery_goes"] + \
                       instructions["database"] + str(get_by_id(USER_ID))
     instruction_no = instructions["problem"][1]["delivery_failed"] + \
@@ -112,15 +115,14 @@ async def order_late(msg: Message, state: FSMContext):
     delivery_response = input("Да/Нет ")
     # delivery_response = utils.generate_support_answer()
     if delivery_response == "Да":
-        res = await utils.generate_response(user_question, instruction_yes)
-        await msg.answer(res[
-                             0] + "\nВаш промокод на следующий заказ " +
-                         utils.generate_ticket())
+        await handle_response(msg, state, instruction_yes)
+        await msg.answer(
+            "\nВаш промокод на следующий заказ " + utils.generate_ticket())
         await state.set_state(Gen.waiting_for_question)
 
     else:
-        res = await utils.generate_response(user_question, instruction_no)
-        await msg.answer(res[0],
+        await handle_response(msg, state, instruction_no)
+        await msg.answer("",
                          reply_markup=keyboard.choice_of_answer_order_damaged)
         await state.set_state(Gen.waiting_for_refund_method_damaged)
 
@@ -219,7 +221,8 @@ async def order_wrong(msg: Message, state: FSMContext):
     res = await utils.generate_response("", instruction)
     await msg.answer(res[0])
 
-#global_constants
+
+# global_constants
 USER_ID = 7
 
 SCENARIOS = {
