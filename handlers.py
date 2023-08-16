@@ -119,12 +119,7 @@ async def order_late(msg: Message, state: FSMContext):
 
 
 async def order_damaged(msg: Message, state: FSMContext):
-    instruction = instructions["problem"][2]["extend"]
-    photo = msg.photo
-    print("Данный товар считается поврежденным?")
-    support_response = input("Да/Нет")
-    #     обработать ответ с помощью джпт и отправить клиенту ответ
-    # отправляет клиенту купон
+    await state.set_state(Gen.waiting_for_damaged_photo)
 
 
 async def order_wrong_cut(msg: Message, state: FSMContext):
@@ -132,6 +127,20 @@ async def order_wrong_cut(msg: Message, state: FSMContext):
     user_question = msg.text + "Молоко 3 , Мёд 1"
     res = await utils.generate_response(user_question, instruction)
     return res
+
+
+
+@router.message(Gen.waiting_for_damaged_photo)
+async def order_damaged_photo(msg: Message, state: FSMContext):
+    photo = msg.photo
+    print("Данный товар считается поврежденным?")
+    support_response = input("Да/Нет")
+    if support_response == "Да":
+        res = await utils.generate_response("", instruction_text=instructions["problem"][2]["damaged"])
+    else:
+        res = await utils.generate_response("", instruction_text=instructions["problem"][2]["not_damaged"])
+    await msg.answer(res[0])
+    await state.set_state(Gen.waiting_for_other_question)
 
 scenarios = {
     0: other_problems,
