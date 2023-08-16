@@ -111,16 +111,17 @@ async def other_problems(msg: Message, state: FSMContext):
 
 async def order_late(msg: Message, state: FSMContext):
     user_question = msg.text
-    instruction_yes = instructions["problem"][1]["delivery_goes"]
-    instruction_no = instructions["problem"][1]["delivery_failed"]
+    instruction_yes = instructions["problem"][1]["delivery_goes"] + instructions["database"] + str(get_by_id(user_id))
+    instruction_no = instructions["problem"][1]["delivery_failed"] + instructions["database"] + str(get_by_id(user_id))
     print("Вы задерживаетесь с доставкой. Вы привезете заказ?")
     delivery_response = input("Да/Нет ")
     if delivery_response == "Да":
         res = await utils.generate_response(user_question, instruction_yes)
     else:
         res = await utils.generate_response(user_question, instruction_no)
-    await msg.answer(res[0])
+    await msg.answer(res[0] + "\nВаш промокод на скидку: "+utils.generate_ticket())
     await state.set_state(Gen.waiting_for_other_question)
+
 
 
 async def order_damaged(msg: Message, state: FSMContext):
