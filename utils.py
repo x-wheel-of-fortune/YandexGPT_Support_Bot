@@ -28,7 +28,7 @@ async def classify(
         temperature,
     )[0]
 
-    if not s or not s.isdigit() or int(s) > 5 or int(s) < 0:
+    if not s or not s.isdigit() or int(s) > len(instructions["problem"])-1 or int(s) < 0:
         s = 0
 
     return int(s)
@@ -59,10 +59,12 @@ async def generate_classified_response(user_question, user_id):
             time.sleep(1)
     return res, problem_type
 
+
 def generate_ticket():
     characters = string.ascii_letters + string.digits
     random_string = ''.join(random_choice(characters) for _ in range(8))
     return random_string
+
 
 if __name__ == "__main__":
     print(generate_ticket())
