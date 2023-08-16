@@ -1,4 +1,7 @@
+import string
 import time
+from random import choice as random_choice
+
 import database_queries
 
 from resources.yaml_resource import load_yaml_resource
@@ -55,3 +58,11 @@ async def generate_classified_response(user_question, user_id):
         if not res or not res[0]:
             time.sleep(1)
     return res, problem_type
+
+def generate_ticket():
+    characters = string.ascii_letters + string.digits
+    random_string = ''.join(random_choice(characters) for _ in range(8))
+    return random_string
+
+if __name__ == "__main__":
+    print(generate_ticket())
