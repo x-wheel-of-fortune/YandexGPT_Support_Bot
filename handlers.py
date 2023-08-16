@@ -87,10 +87,12 @@ async def send_message(msg: Message, res, mesg, user_id):
 
 
 # Common function to handle responses
-async def handle_response(msg: Message, state: FSMContext, instruction_key):
+async def handle_response(msg: Message, state: FSMContext, instruction_key, next_state=None):
     instruction = instruction_key
     res = await utils.generate_response("", instruction)
     await msg.answer(res[0])
+    if next_state:
+        await state.set_state(next_state)
 
 
 async def other_problems(msg: Message, state: FSMContext):
@@ -99,8 +101,8 @@ async def other_problems(msg: Message, state: FSMContext):
     if not type[0] or not type[0].isdigit() or int(type[0]) < 0 or int(
             type[0]) > 1:
         await handle_response(msg, state,
-                              instructions["problem"][0]["not_support"])
-        await state.set_state(Gen.waiting_for_question)
+                              instructions["problem"][0]["not_support"],
+                              Gen.waiting_for_question)
     else:
         await handle_response(msg, state,
                               instructions["problem"][0]["support"])
@@ -115,24 +117,23 @@ async def order_late(msg: Message, state: FSMContext):
     delivery_response = input("Да/Нет ")
     # delivery_response = utils.generate_support_answer()
     if delivery_response == "Да":
-        await handle_response(msg, state, instruction_yes)
+        await handle_response(msg, state, instruction_yes,
+                              Gen.waiting_for_question)
         await msg.answer(
             "\nВаш промокод на следующий заказ " + utils.generate_ticket())
-        await state.set_state(Gen.waiting_for_question)
 
     else:
-        await handle_response(msg, state, instruction_no)
+        await handle_response(msg, state, instruction_no,
+                              Gen.waiting_for_refund_method_damaged)
         await msg.answer("",
                          reply_markup=keyboard.choice_of_answer_order_damaged)
-        await state.set_state(Gen.waiting_for_refund_method_damaged)
 
 
 async def order_damaged(msg: Message, state: FSMContext):
     instruction = instructions["base"] + instructions["problem"][3]["base"] + \
                   instructions["database"] + str(get_by_id(USER_ID))
-    res = await utils.generate_response(msg.text, instruction)
-    await msg.answer(res[0])  # Отправка ответа пользователю
-    await state.set_state(Gen.waiting_for_damaged_photo)
+    await handle_response(msg, state, instruction,
+                          Gen.waiting_for_damaged_photo)
 
 
 @router.message(Gen.waiting_for_damaged_photo)
