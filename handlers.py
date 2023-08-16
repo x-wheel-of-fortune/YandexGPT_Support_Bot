@@ -27,8 +27,8 @@ router = Router()
 SESSION_TIMEOUT = datetime.timedelta(minutes=30)
 
 user_last_interaction = {}
-
-
+from database_queries import get_by_id
+user_id = 7
 @router.message(Command("start"))
 @router.message(StateFilter(None))
 async def start_handler(msg: Message, state: FSMContext):
@@ -124,9 +124,9 @@ async def order_late(msg: Message, state: FSMContext):
 
 
 async def order_damaged(msg: Message, state: FSMContext):
-    instruction = instructions["problem"][3]["base"]
-    ans, _ = await utils.generate_response(msg.text , instruction)
-    await msg.answer(ans)  # Отправка ответа пользователю
+    instruction = instructions["base"] + instructions["problem"][3]["base"] + instructions["database"] + str(get_by_id(user_id))
+    res = await utils.generate_response(msg.text, instruction)
+    await msg.answer(res[0])  # Отправка ответа пользователю
     await state.set_state(Gen.waiting_for_damaged_photo)
 
 @router.message(Gen.waiting_for_damaged_photo)
@@ -135,13 +135,31 @@ async def order_damaged_photo(msg: Message, state: FSMContext):
     print("Данный товар считается поврежденным?")
     support_response = input("Да/Нет ")
     if support_response == "Да":
-        res = await utils.generate_response("", instruction_text=instructions["problem"][2]["damaged"])
+        res = await utils.generate_response("", instruction_text=instructions["base"] + instructions["problem"][2]["damaged"] + instructions["database"] + str(get_by_id(user_id)))
+
     else:
-        res = await utils.generate_response("", instruction_text=instructions["problem"][2]["not_damaged"])
+        res = await utils.generate_response("", instruction_text=instructions["base"] + instructions["problem"][2]["not_damaged"] + instructions["database"] + str(get_by_id(user_id)))
     await msg.answer(res[0])
     await state.set_state(Gen.waiting_for_other_question)
 
+async def order_expired(msg: Message, state: FSMContext):
+    instruction = instructions["base"] + instructions["problem"][3]["base"] + instructions["database"] + str(get_by_id(user_id))
+    res = await utils.generate_response(msg.text, instruction)
+    await msg.answer(res[0])  # Отправка ответа пользователю
+    await state.set_state(Gen.waiting_for_expired_photo)
 
+
+@router.message(Gen.waiting_for_expired_photo)
+async def order_expired_photo(msg: Message, state: FSMContext):
+    photo = msg.photo
+    print("Данный товар считается с истекшим срокос годности?")
+    support_response = input("Да/Нет ")
+    if support_response == "Да":
+        res = await utils.generate_response("", instruction_text=instructions["base"] + instructions["problem"][3]["expired"] + instructions["database"] + str(get_by_id(user_id)))
+    else:
+        res = await utils.generate_response("", instruction_text=instructions["base"] + instructions["problem"][3]["not_expired"] + instructions["database"] + str(get_by_id(user_id)))
+    await msg.answer(res[0])
+    await state.set_state(Gen.waiting_for_other_question)
 
 async def order_wrong_cut(msg: Message, state: FSMContext):
     instruction = instructions["problem"][3]["extend"]
@@ -156,5 +174,5 @@ scenarios = {
     0: other_problems,
     1: order_late,
     2: order_damaged,
-    3: order_wrong_cut,
+    3: order_expired,
 }
