@@ -73,7 +73,6 @@ async def response(msg: Message, state: FSMContext):
     await scenarios[problem_type](msg, state)
 
 
-
 async def receive_message(message: Message):
     if message.content_type == types.ContentType.TEXT:
         return message.text
@@ -103,12 +102,22 @@ async def send_message(msg: Message, res, mesg, user_id):
 
 
 async def other_problems(msg: Message, state: FSMContext):
-    instruction = instructions["problem"][0]["extend"]
-    # Отправляет вопрос пользователя в службу поддержки
-    print(msg.text) #вопрос пользователя
-    support_response = input()
-    # Бот отправляет ответ службы поддержки пользователю
-
+    instruction = instructions["problem"][0]["classify"]
+    type = await utils.generate_response(msg.text, instruction)
+    if not type[0] or not type[0].isdigit() or int(type[0]) < 0 or int(type[0]) > 1:
+        prob = 0
+    else:
+        prob = 1
+    if prob == 0:
+        instruction = instructions["problem"][0]["not_support"]
+        res = await utils.generate_response("", instruction)
+        await msg.answer(res[0])
+        await state.set_state(Gen.waiting_for_question)
+    else:
+        instruction = instructions["problem"][0]["support"]
+        res = await utils.generate_response("", instruction)
+        await msg.answer(res[0])
+        # support_response = input()
 
 
 async def order_late(msg: Message, state: FSMContext):
@@ -125,14 +134,12 @@ async def order_late(msg: Message, state: FSMContext):
     await state.set_state(Gen.waiting_for_refund_method_damaged)
 
 
-
-
-
 async def order_damaged(msg: Message, state: FSMContext):
     instruction = instructions["base"] + instructions["problem"][3]["base"] + instructions["database"] + str(get_by_id(user_id))
     res = await utils.generate_response(msg.text, instruction)
     await msg.answer(res[0])  # Отправка ответа пользователю
     await state.set_state(Gen.waiting_for_damaged_photo)
+
 
 @router.message(Gen.waiting_for_damaged_photo)
 async def order_damaged_photo(msg: Message, state: FSMContext):
@@ -174,6 +181,7 @@ async def choosing_refund_method_damaged(msg: Message, state: FSMContext):
         res = await utils.generate_response("", instruction_text=instruction)
     await msg.answer(res[0])
 
+
 async def order_expired(msg: Message, state: FSMContext):
     instruction = instructions["base"] + instructions["problem"][3]["base"] + instructions["database"] + str(get_by_id(user_id))
     res = await utils.generate_response(msg.text, instruction)
@@ -197,13 +205,11 @@ async def order_expired_photo(msg: Message, state: FSMContext):
     await msg.answer(res[0])
     await state.set_state(Gen.waiting_for_other_question)
 
-async def order_wrong_cut(msg: Message, state: FSMContext):
-    instruction = instructions["problem"][3]["extend"]
-    user_question = msg.text + "Молоко 3 , Мёд 1"
-    res = await utils.generate_response(user_question, instruction)
-    return res
 
-
+async def order_wrong(msg: Message, state: FSMContext):
+    instruction = instructions["base"] + instructions["problem"][4]["support"]
+    res = await utils.generate_response("", instruction)
+    await msg.answer(res[0])
 
 
 scenarios = {
@@ -211,4 +217,5 @@ scenarios = {
     1: order_late,
     2: order_damaged,
     3: order_expired,
+    4: order_wrong,
 }
