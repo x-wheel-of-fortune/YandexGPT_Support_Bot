@@ -111,11 +111,19 @@ async def other_problems(msg: Message, state: FSMContext):
     # Бот отправляет ответ службы поддержки пользователю
 
 
+
 async def order_late(msg: Message, state: FSMContext):
-    instruction = instructions["problem"][1]["extend"]
-    print("Вы задерживаетесь с доставкой заказа. Вы привезете заказ?")
+    user_question = msg.text
+    instruction_yes = instructions["problem"][1]["delivery_goes"]
+    instruction_no = instructions["problem"][1]["delivery_failed"]
+    print("Вы задерживаетесь с доставкой. Вы привезете заказ?")
     delivery_response = input("Да/Нет")
-    #     обработать ответ с помощью джпт и отправить клиенту ответ
+    if delivery_response == "Да":
+        res = await utils.generate_response(user_question, instruction_yes)[0]
+    else:
+        res = await utils.generate_response(user_question, instruction_no)[0]
+    await msg.answer(res)
+    await state.set_state(Gen.waiting_for_other_question)
 
 
 async def order_damaged(msg: Message, state: FSMContext):
@@ -134,7 +142,7 @@ async def order_wrong_cut(msg: Message, state: FSMContext):
 async def order_damaged_photo(msg: Message, state: FSMContext):
     photo = msg.photo
     print("Данный товар считается поврежденным?")
-    support_response = input("Да/Нет")
+    support_response = input("Да/Нет ")
     if support_response == "Да":
         res = await utils.generate_response("", instruction_text=instructions["problem"][2]["damaged"])
     else:
